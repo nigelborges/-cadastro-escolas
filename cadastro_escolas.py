@@ -35,16 +35,16 @@ def salvar_dados(df_novo, id_editar=None):
     df.to_csv(OUTPUT_FILE, index=False)
 
 def reindexar_escolas(df):
-    df_sorted = df.sort_values(by=["ID Escola", "ID Sala"]).reset_index(drop=True)
+    df_sorted = df.sort_values(by=["Nome Escola", "Endereco", "ID Sala"]).reset_index(drop=True)
     nova_df = []
-    escolas_unicas = df_sorted["Nome Escola"].unique()
-    for novo_id, nome_escola in enumerate(escolas_unicas, start=1):
-        escolas_filtradas = df_sorted[df_sorted["Nome Escola"] == nome_escola].copy()
-        escolas_filtradas["ID Escola"] = novo_id
-        escolas_filtradas["ID Sala"] = range(1, len(escolas_filtradas) + 1)
-        escolas_filtradas["Ordem da Sala"] = escolas_filtradas["ID Sala"]
-        escolas_filtradas["Numero de Salas"] = len(escolas_filtradas)
-        nova_df.append(escolas_filtradas)
+    escolas_agrupadas = df_sorted.groupby(['Nome Escola', 'Endereco'])
+    for novo_id, ((nome_escola, endereco), grupo) in enumerate(escolas_agrupadas, start=1):
+        grupo = grupo.copy().reset_index(drop=True)
+        grupo['ID Escola'] = novo_id
+        grupo['ID Sala'] = range(1, len(grupo) + 1)
+        grupo['Ordem da Sala'] = grupo['ID Sala']
+        grupo['Numero de Salas'] = len(grupo)
+        nova_df.append(grupo)
     return pd.concat(nova_df, ignore_index=True)
 
 def gerar_candidatos(id_escola, nome, endereco, num_salas, nomes_salas_info, candidatos_info, blocos_info, andares_info):
