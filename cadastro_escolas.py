@@ -61,8 +61,8 @@ def form_escola():
 
         if tipo == "Sim":
             candidatos = st.number_input("Candidatos por Sala", min_value=1, step=1)
-            bloco = st.text_input("Bloco", value="A")
-            andar = st.number_input("Andar", min_value=1, step=1)
+            bloco = st.text_input("Bloco", value="Bloco A")
+            andar = st.text_input("Andar", value="Térreo")
             for i in range(1, num_salas + 1):
                 nome_sala = st.text_input(f"Nome da Sala {i}", value=f"Sala {i:02d}", key=f"nome_sala_{i}")
                 nomes_salas_info.append(nome_sala)
@@ -74,8 +74,8 @@ def form_escola():
                 st.markdown(f"#### Sala {i}")
                 nome_sala = st.text_input(f"Nome da Sala {i}", value=f"Sala {i:02d}", key=f"nome_sala_{i}")
                 candidatos = st.number_input(f"Candidatos Sala {i}", min_value=1, step=1, key=f"cand_{i}")
-                bloco = st.text_input(f"Bloco Sala {i}", value="A", key=f"bloco_{i}")
-                andar = st.number_input(f"Andar Sala {i}", min_value=1, step=1, key=f"andar_{i}")
+                bloco = st.text_input(f"Bloco Sala {i}", value=f"Bloco A", key=f"bloco_{i}")
+                andar = st.text_input(f"Andar Sala {i}", value="Térreo", key=f"andar_{i}")
                 nomes_salas_info.append(nome_sala)
                 candidatos_info.append(candidatos)
                 blocos_info.append(bloco)
