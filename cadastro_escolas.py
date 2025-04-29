@@ -27,7 +27,26 @@ def salvar_dados(df_novo, id_editar=None):
     if os.path.exists(OUTPUT_FILE):
         df_existente = pd.read_csv(OUTPUT_FILE)
         if id_editar is not None:
+            escola_antiga = df_existente[df_existente['ID Escola'] == id_editar]
             df_existente = df_existente[df_existente['ID Escola'] != id_editar]
+
+            # Mapear nomes antigos para ID Sala
+            nomes_antigos = escola_antiga.drop_duplicates(subset='Nome da Sala')
+            mapa_ids = {row['Nome da Sala']: row['ID Sala'] for _, row in nomes_antigos.iterrows()}
+            usados = set()
+            id_atual = 1
+            for i, row in df_novo.iterrows():
+                nome = row['Nome da Sala']
+                if nome in mapa_ids:
+                    novo_id = mapa_ids[nome]
+                else:
+                    while id_atual in usados or id_atual in mapa_ids.values():
+                        id_atual += 1
+                    novo_id = id_atual
+                usados.add(novo_id)
+                df_novo.at[i, 'ID Sala'] = novo_id
+                df_novo.at[i, 'Ordem da Sala'] = novo_id
+
         df = pd.concat([df_existente, df_novo], ignore_index=True)
     else:
         df = df_novo
@@ -41,9 +60,7 @@ def reindexar_escolas(df):
     for novo_id, ((nome_escola, endereco), grupo) in enumerate(escolas_agrupadas, start=1):
         grupo = grupo.copy().reset_index(drop=True)
         grupo['ID Escola'] = novo_id
-        grupo['ID Sala'] = range(1, len(grupo) + 1)
-        grupo['Ordem da Sala'] = grupo['ID Sala']
-        grupo['Numero de Salas'] = len(grupo)
+        grupo['Numero de Salas'] = grupo['ID Sala'].nunique()
         nova_df.append(grupo)
     return pd.concat(nova_df, ignore_index=True)
 
