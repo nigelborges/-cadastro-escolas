@@ -45,41 +45,51 @@ def gerar_candidatos(id_escola, nome, endereco, num_salas, candidatos_info, bloc
     return pd.DataFrame(linhas)
 
 def form_escola():
-    st.subheader("Cadastro de Escola")
-    nome = st.text_input("Nome da Escola")
-    endereco = st.text_input("Endereço")
-    num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1)
+    st.image('https://www.idecan.org.br/assets/img/logo.png', use_column_width=True)
+    st.markdown("""<h1 style='text-align: center; color: #0E4D92;'>Sistema de Cadastro de Escolas</h1>""", unsafe_allow_html=True)
+    st.markdown("""<hr style='border:1px solid #0E4D92'>""", unsafe_allow_html=True)
+    
+    with st.form("formulario_cadastro"):
+        st.subheader("Cadastro de Escola")
+        nome = st.text_input("Nome da Escola")
+        endereco = st.text_input("Endereço")
+        num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1)
 
-    tipo = st.radio("Todas as salas têm mesmos dados?", ["Sim", "Não"])
+        tipo = st.radio("Todas as salas têm mesmos dados?", ["Sim", "Não"])
 
-    candidatos_info, blocos_info, andares_info = [], [], []
+        candidatos_info, blocos_info, andares_info = [], [], []
 
-    if tipo == "Sim":
-        candidatos = st.number_input("Candidatos por Sala", min_value=1, step=1)
-        bloco = st.text_input("Bloco", value="A")
-        andar = st.number_input("Andar", min_value=1, step=1)
-        candidatos_info = [candidatos] * num_salas
-        blocos_info = [bloco] * num_salas
-        andares_info = [andar] * num_salas
-    else:
-        for i in range(1, num_salas + 1):
-            st.markdown(f"#### Sala {i}")
-            candidatos = st.number_input(f"Candidatos Sala {i}", min_value=1, step=1, key=f"cand_{i}")
-            bloco = st.text_input(f"Bloco Sala {i}", value="A", key=f"bloco_{i}")
-            andar = st.number_input(f"Andar Sala {i}", min_value=1, step=1, key=f"andar_{i}")
-            candidatos_info.append(candidatos)
-            blocos_info.append(bloco)
-            andares_info.append(andar)
+        if tipo == "Sim":
+            candidatos = st.number_input("Candidatos por Sala", min_value=1, step=1)
+            bloco = st.text_input("Bloco", value="A")
+            andar = st.number_input("Andar", min_value=1, step=1)
+            candidatos_info = [candidatos] * num_salas
+            blocos_info = [bloco] * num_salas
+            andares_info = [andar] * num_salas
+        else:
+            for i in range(1, num_salas + 1):
+                st.markdown(f"#### Sala {i}")
+                candidatos = st.number_input(f"Candidatos Sala {i}", min_value=1, step=1, key=f"cand_{i}")
+                bloco = st.text_input(f"Bloco Sala {i}", value="A", key=f"bloco_{i}")
+                andar = st.number_input(f"Andar Sala {i}", min_value=1, step=1, key=f"andar_{i}")
+                candidatos_info.append(candidatos)
+                blocos_info.append(bloco)
+                andares_info.append(andar)
 
-    if st.button("Salvar Cadastro"):
-        df = carregar_dados()
-        id_escola = df['ID Escola'].max() + 1 if not df.empty else 1
-        nova_escola = gerar_candidatos(id_escola, nome, endereco, num_salas, candidatos_info, blocos_info, andares_info)
-        salvar_dados(nova_escola)
-        st.success("Escola cadastrada com sucesso!")
+        submit = st.form_submit_button("Salvar Cadastro")
+        if submit:
+            df = carregar_dados()
+            id_escola = df['ID Escola'].max() + 1 if not df.empty else 1
+            nova_escola = gerar_candidatos(id_escola, nome, endereco, num_salas, candidatos_info, blocos_info, andares_info)
+            salvar_dados(nova_escola)
+            st.success("Escola cadastrada com sucesso!")
 
 
 def mostrar_escolas():
+    st.image('https://www.idecan.org.br/assets/img/logo.png', use_column_width=True)
+    st.markdown("""<h1 style='text-align: center; color: #0E4D92;'>Escolas Cadastradas</h1>""", unsafe_allow_html=True)
+    st.markdown("""<hr style='border:1px solid #0E4D92'>""", unsafe_allow_html=True)
+    
     df = carregar_dados()
     if df.empty:
         st.info("Nenhuma escola cadastrada.")
@@ -99,7 +109,10 @@ def excluir_escola(id_escola):
 
 
 def login():
-    st.title("Login")
+    st.image('https://www.idecan.org.br/assets/img/logo.png', use_column_width=True)
+    st.markdown("""<h1 style='text-align: center; color: #0E4D92;'>Login</h1>""", unsafe_allow_html=True)
+    st.markdown("""<hr style='border:1px solid #0E4D92'>""", unsafe_allow_html=True)
+    
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
     if st.button("Entrar"):
@@ -109,7 +122,7 @@ def login():
             st.error("Usuário ou senha incorretos")
 
 if __name__ == '__main__':
-    st.set_page_config(page_title="Cadastro Escolar Avançado")
+    st.set_page_config(page_title="Cadastro Escolar Avançado", layout="centered")
 
     if not st.session_state['logado']:
         login()
