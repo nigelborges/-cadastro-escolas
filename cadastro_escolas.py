@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 # Arquivo de saída
-OUTPUT_FILE = 'escolas.xlsx'
+OUTPUT_FILE = 'escolas.csv'
 
 # Usuário e senha fixos
 USUARIO_VALIDO = 'admin'
@@ -13,10 +13,9 @@ SENHA_VALIDA = '1234'
 dados = []
 
 # Funções para manipulação dos dados
-def salvar_xlsx():
+def salvar_csv():
     df = pd.DataFrame(dados)
-    with pd.ExcelWriter(OUTPUT_FILE) as writer:
-        df.to_excel(writer, index=False)
+    df.to_csv(OUTPUT_FILE, index=False)
 
 def gerar_dados(nome_escola, endereco, num_salas, candidatos_info, blocos_info, andares_info):
     global dados
@@ -41,7 +40,7 @@ if __name__ == "__main__":
     st.title("Sistema de Cadastro de Escolas e Salas")
 
     if os.path.exists(OUTPUT_FILE):
-        df_existente = pd.read_excel(OUTPUT_FILE)
+        df_existente = pd.read_csv(OUTPUT_FILE)
         dados = df_existente.to_dict('records')
 
     if 'logado' not in st.session_state:
@@ -78,7 +77,7 @@ if __name__ == "__main__":
                     blocos_info = [bloco_unico] * num_salas
                     andares_info = [andar_unico] * num_salas
                     gerar_dados(nome_escola, endereco, num_salas, candidatos_info, blocos_info, andares_info)
-                    salvar_xlsx()
+                    salvar_csv()
                     st.success(f"Escola cadastrada com sucesso! ({num_salas} salas)")
             else:
                 for i in range(1, num_salas + 1):
@@ -91,20 +90,19 @@ if __name__ == "__main__":
                     andares_info.append(andar)
                 if st.form_submit_button("Cadastrar Escola"):
                     gerar_dados(nome_escola, endereco, num_salas, candidatos_info, blocos_info, andares_info)
-                    salvar_xlsx()
+                    salvar_csv()
                     st.success(f"Escola cadastrada com sucesso! ({num_salas} salas)")
 
         if dados:
             st.subheader("Escolas Cadastradas")
             df = pd.DataFrame(dados)
             st.dataframe(df)
-            with open(OUTPUT_FILE, "rb") as f:
-                st.download_button(
-                    label="Baixar Excel",
-                    data=f,
-                    file_name='escolas.xlsx',
-                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                )
+            st.download_button(
+                label="Baixar CSV",
+                data=df.to_csv(index=False).encode('utf-8'),
+                file_name='escolas.csv',
+                mime='text/csv'
+            )
 
         if st.button("Sair"):
             st.session_state['logado'] = False
