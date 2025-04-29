@@ -2,114 +2,131 @@ import streamlit as st
 import pandas as pd
 import os
 
-# Arquivo de saída
 OUTPUT_FILE = 'escolas.csv'
-
-# Usuário e senha fixos
 USUARIO_VALIDO = 'admin'
 SENHA_VALIDA = '1234'
 
-# Dados na memória
-dados = []
+if 'logado' not in st.session_state:
+    st.session_state['logado'] = False
+if 'modo_edicao' not in st.session_state:
+    st.session_state['modo_edicao'] = False
+if 'escola_em_edicao' not in st.session_state:
+    st.session_state['escola_em_edicao'] = None
 
-# Funções para manipulação dos dados
-def salvar_csv():
-    df = pd.DataFrame(dados)
+def carregar_dados():
     if os.path.exists(OUTPUT_FILE):
-        df_existente = pd.read_csv(OUTPUT_FILE)
-        df = pd.concat([df_existente, df], ignore_index=True)
+        return pd.read_csv(OUTPUT_FILE)
+    return pd.DataFrame(columns=[
+        'ID Escola', 'Nome Escola', 'Endereco', 'ID Sala', 'Bloco', 'Andar',
+        'Ordem da Sala', 'Numero de Salas', 'Candidatos por Sala', 'Ordem do Candidato'])
+
+def salvar_dados(df):
     df.to_csv(OUTPUT_FILE, index=False)
 
-def gerar_dados(nome_escola, endereco, num_salas, candidatos_info, blocos_info, andares_info):
-    global dados
-    id_escola = (max([d['ID Escola'] for d in dados]) + 1) if dados else 1
+def gerar_candidatos(id_escola, nome, endereco, num_salas, candidatos_info, blocos_info, andares_info):
+    linhas = []
     for i in range(1, num_salas + 1):
-        num_candidatos = candidatos_info[i-1]
-        for candidato_ordem in range(1, num_candidatos + 1):
-            registro = {
+        for c in range(1, candidatos_info[i-1] + 1):
+            linhas.append({
                 'ID Escola': id_escola,
-                'Nome Escola': nome_escola,
+                'Nome Escola': nome,
                 'Endereco': endereco,
                 'ID Sala': i,
                 'Bloco': blocos_info[i-1],
                 'Andar': andares_info[i-1],
                 'Ordem da Sala': i,
                 'Numero de Salas': num_salas,
-                'Candidatos por Sala': num_candidatos,
-                'Ordem do Candidato': candidato_ordem
-            }
-            dados.append(registro)
+                'Candidatos por Sala': candidatos_info[i-1],
+                'Ordem do Candidato': c
+            })
+    return pd.DataFrame(linhas)
 
-# Inicializa o app
-if __name__ == "__main__":
-    st.set_page_config(page_title="Cadastro de Escolas", layout="centered")
-    st.title("Sistema de Cadastro de Escolas e Salas")
+def form_escola():
+    st.subheader("Cadastro de Escola")
+    nome = st.text_input("Nome da Escola")
+    endereco = st.text_input("Endereço")
+    num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1, key='num_salas')
 
-    if os.path.exists(OUTPUT_FILE):
-        df_existente = pd.read_csv(OUTPUT_FILE)
-        dados = df_existente.to_dict('records')
+    tipo = st.radio("Todas as salas têm mesmos dados?", ["Sim", "Não"])
 
-    if 'logado' not in st.session_state:
-        st.session_state['logado'] = False
+    candidatos_info, blocos_info, andares_info = [], [], []
+
+    if tipo == "Sim":
+        candidatos = st.number_input("Candidatos por Sala", min_value=1, step=1)
+        bloco = st.text_input("Bloco", value="A")
+        andar = st.number_input("Andar", min_value=1, step=1)
+        candidatos_info = [candidatos] * num_salas
+        blocos_info = [bloco] * num_salas
+        andares_info = [andar] * num_salas
+    else:
+        for i in range(1, num_salas + 1):
+            st.markdown(f"#### Sala {i}")
+            candidatos = st.number_input(f"Candidatos Sala {i}", min_value=1, step=1, key=f"cand_{i}")
+            bloco = st.text_input(f"Bloco Sala {i}", value="A", key=f"bloco_{i}")
+            andar = st.number_input(f"Andar Sala {i}", min_value=1, step=1, key=f"andar_{i}")
+            candidatos_info.append(candidatos)
+            blocos_info.append(bloco)
+            andares_info.append(andar)
+
+    if st.button("Salvar Cadastro"):
+        df = carregar_dados()
+        id_escola = df['ID Escola'].max() + 1 if not df.empty else 1
+        nova_escola = gerar_candidatos(id_escola, nome, endereco, num_salas, candidatos_info, blocos_info, andares_info)
+        df = pd.concat([df, nova_escola], ignore_index=True)
+        salvar_dados(df)
+        st.success("Escola cadastrada com sucesso!")
+        st.experimental_rerun()
+
+def excluir_escola(id_escola):
+    df = carregar_dados()
+    df = df[df['ID Escola'] != id_escola]
+    salvar_dados(df)
+    st.success("Escola excluída com sucesso!")
+    st.experimental_rerun()
+
+def mostrar_escolas():
+    df = carregar_dados()
+    for id_escola in sorted(df['ID Escola'].unique()):
+        escola_df = df[df['ID Escola'] == id_escola]
+        with st.expander(f"{escola_df['Nome Escola'].iloc[0]} - ID {id_escola}"):
+            st.dataframe(escola_df)
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button(f"Excluir ID {id_escola}"):
+                    excluir_escola(id_escola)
+            with col2:
+                st.markdown("(Editar: versão futura)")
+
+def login():
+    st.title("Login")
+    usuario = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
+    if st.button("Entrar"):
+        if usuario == USUARIO_VALIDO and senha == SENHA_VALIDA:
+            st.session_state['logado'] = True
+            st.experimental_rerun()
+        else:
+            st.error("Usuário ou senha incorretos")
+
+if __name__ == '__main__':
+    st.set_page_config(page_title="Cadastro Escolar Avançado")
 
     if not st.session_state['logado']:
-        st.subheader("Login")
-        usuario = st.text_input("Usuário")
-        senha = st.text_input("Senha", type="password")
-        if st.button("Entrar"):
-            if usuario == USUARIO_VALIDO and senha == SENHA_VALIDA:
-                st.session_state['logado'] = True
-                st.success("Login realizado com sucesso!")
-            else:
-                st.error("Usuário ou senha incorretos.")
+        login()
     else:
-        with st.form("form_cadastro"):
-            nome_escola = st.text_input("Nome da Escola")
-            endereco = st.text_input("Endereço")
-            num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1)
+        st.sidebar.title("Menu")
+        op = st.sidebar.radio("Navegação", ["Cadastrar Escola", "Visualizar Escolas", "Baixar CSV", "Sair"])
 
-            opcoes = st.radio("Todas as salas têm o mesmo número de candidatos, bloco e andar?", ("Sim", "Não"))
+        if op == "Cadastrar Escola":
+            form_escola()
 
-            candidatos_info = []
-            blocos_info = []
-            andares_info = []
+        elif op == "Visualizar Escolas":
+            mostrar_escolas()
 
-            if opcoes == "Sim":
-                candidatos_unico = st.number_input("Candidatos por Sala", min_value=1, step=1)
-                bloco_unico = st.text_input("Bloco", value="A")
-                andar_unico = st.number_input("Andar", min_value=1, step=1)
-                if st.form_submit_button("Cadastrar Escola"):
-                    candidatos_info = [candidatos_unico] * num_salas
-                    blocos_info = [bloco_unico] * num_salas
-                    andares_info = [andar_unico] * num_salas
-                    gerar_dados(nome_escola, endereco, num_salas, candidatos_info, blocos_info, andares_info)
-                    salvar_csv()
-                    st.success(f"Escola cadastrada com sucesso! ({num_salas} salas)")
-            else:
-                for i in range(1, num_salas + 1):
-                    st.markdown(f"### Sala {i}")
-                    candidatos = st.number_input(f"Candidatos Sala {i}", min_value=1, step=1, key=f"cand_{i}")
-                    bloco = st.text_input(f"Bloco Sala {i}", value="A", key=f"bloco_{i}")
-                    andar = st.number_input(f"Andar Sala {i}", min_value=1, step=1, key=f"andar_{i}")
-                    candidatos_info.append(candidatos)
-                    blocos_info.append(bloco)
-                    andares_info.append(andar)
-                if st.form_submit_button("Cadastrar Escola"):
-                    gerar_dados(nome_escola, endereco, num_salas, candidatos_info, blocos_info, andares_info)
-                    salvar_csv()
-                    st.success(f"Escola cadastrada com sucesso! ({num_salas} salas)")
+        elif op == "Baixar CSV":
+            df = carregar_dados()
+            st.download_button("Baixar Arquivo CSV", df.to_csv(index=False).encode('utf-8'), "escolas.csv")
 
-        if dados:
-            st.subheader("Candidatos Cadastrados")
-            df = pd.DataFrame(dados)
-            st.dataframe(df)
-            st.download_button(
-                label="Baixar CSV",
-                data=df.to_csv(index=False).encode('utf-8'),
-                file_name='escolas.csv',
-                mime='text/csv'
-            )
-
-        if st.button("Sair"):
+        elif op == "Sair":
             st.session_state['logado'] = False
             st.experimental_rerun()
