@@ -77,7 +77,7 @@ def form_escola():
                 nomes_salas_info.append(sala['Nome da Sala'].iloc[0])
                 blocos_info.append(sala['Bloco'].iloc[0])
                 andares_info.append(sala['Andar'].iloc[0])
-                candidatos_info.append(int(sala['Candidatos por Sala'].iloc[0]) if 'Candidatos por Sala' in sala.columns else sala['Ordem do Candidato'].max())
+                candidatos_info.append(int(sala['Ordem do Candidato'].max()))
 
     nome = st.text_input("Nome da Escola", value=nome)
     endereco = st.text_input("Endereço", value=endereco)
@@ -119,6 +119,7 @@ def form_escola():
             st.success("Escola atualizada com sucesso!" if st.session_state['modo_edicao'] else "Escola cadastrada com sucesso!")
             st.session_state['modo_edicao'] = False
             st.session_state['escola_em_edicao'] = None
+            st.experimental_rerun()
 
 
 def mostrar_escolas():
@@ -139,9 +140,11 @@ def mostrar_escolas():
                 if st.button(f"Editar ID {id_escola}"):
                     st.session_state['modo_edicao'] = True
                     st.session_state['escola_em_edicao'] = id_escola
+                    st.experimental_rerun()
             with col2:
                 if st.button(f"Excluir ID {id_escola}"):
                     excluir_escola(id_escola)
+
 
 def excluir_escola(id_escola):
     df = carregar_dados()
