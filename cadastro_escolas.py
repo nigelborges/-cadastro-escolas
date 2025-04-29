@@ -12,6 +12,8 @@ if 'modo_edicao' not in st.session_state:
     st.session_state['modo_edicao'] = False
 if 'escola_em_edicao' not in st.session_state:
     st.session_state['escola_em_edicao'] = None
+if 'forcar_rerun' not in st.session_state:
+    st.session_state['forcar_rerun'] = False
 
 def carregar_dados():
     if os.path.exists(OUTPUT_FILE):
@@ -140,7 +142,7 @@ def mostrar_escolas():
                 if st.button(f"Editar ID {id_escola}"):
                     st.session_state['modo_edicao'] = True
                     st.session_state['escola_em_edicao'] = id_escola
-                    st.experimental_rerun()
+                    st.session_state['forcar_rerun'] = True
             with col2:
                 if st.button(f"Excluir ID {id_escola}"):
                     excluir_escola(id_escola)
@@ -167,6 +169,10 @@ def login():
 
 if __name__ == '__main__':
     st.set_page_config(page_title="Cadastro Escolar Avançado", layout="centered")
+
+    if st.session_state.get('forcar_rerun', False):
+        st.session_state['forcar_rerun'] = False
+        st.experimental_rerun()
 
     if not st.session_state['logado']:
         login()
