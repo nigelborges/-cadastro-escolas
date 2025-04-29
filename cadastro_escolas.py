@@ -12,8 +12,8 @@ if 'modo_edicao' not in st.session_state:
     st.session_state['modo_edicao'] = False
 if 'escola_em_edicao' not in st.session_state:
     st.session_state['escola_em_edicao'] = None
-if 'forcar_rerun' not in st.session_state:
-    st.session_state['forcar_rerun'] = False
+if 'pagina_atual' not in st.session_state:
+    st.session_state['pagina_atual'] = 'Cadastrar Escola'
 
 def carregar_dados():
     if os.path.exists(OUTPUT_FILE):
@@ -121,7 +121,6 @@ def form_escola():
             st.success("Escola atualizada com sucesso!" if st.session_state['modo_edicao'] else "Escola cadastrada com sucesso!")
             st.session_state['modo_edicao'] = False
             st.session_state['escola_em_edicao'] = None
-            st.experimental_rerun()
 
 
 def mostrar_escolas():
@@ -142,7 +141,7 @@ def mostrar_escolas():
                 if st.button(f"Editar ID {id_escola}"):
                     st.session_state['modo_edicao'] = True
                     st.session_state['escola_em_edicao'] = id_escola
-                    st.session_state['forcar_rerun'] = True
+                    st.session_state['pagina_atual'] = "Cadastrar Escola"
             with col2:
                 if st.button(f"Excluir ID {id_escola}"):
                     excluir_escola(id_escola)
@@ -170,15 +169,13 @@ def login():
 if __name__ == '__main__':
     st.set_page_config(page_title="Cadastro Escolar Avançado", layout="centered")
 
-    if st.session_state.get('forcar_rerun', False):
-        st.session_state['forcar_rerun'] = False
-        st.experimental_rerun()
-
     if not st.session_state['logado']:
         login()
     else:
         st.sidebar.title("Menu")
-        op = st.sidebar.radio("Navegação", ["Cadastrar Escola", "Visualizar Escolas", "Baixar CSV", "Sair"])
+        op = st.sidebar.radio("Navegação", ["Cadastrar Escola", "Visualizar Escolas", "Baixar CSV", "Sair"],
+                              index=["Cadastrar Escola", "Visualizar Escolas", "Baixar CSV", "Sair"].index(st.session_state['pagina_atual']))
+        st.session_state['pagina_atual'] = op
 
         if op == "Cadastrar Escola":
             form_escola()
