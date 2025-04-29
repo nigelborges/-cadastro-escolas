@@ -48,14 +48,14 @@ def form_escola():
     st.image('https://www.idecan.org.br/assets/img/logo.png', use_container_width=True)
     st.markdown("""<h1 style='text-align: center; color: #0E4D92;'>Sistema de Cadastro de Escolas</h1>""", unsafe_allow_html=True)
     st.markdown("""<hr style='border:1px solid #0E4D92'>""", unsafe_allow_html=True)
-    
-    with st.form("formulario_cadastro"):
-        st.subheader("Cadastro de Escola")
-        nome = st.text_input("Nome da Escola")
-        endereco = st.text_input("Endereço")
-        num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1)
 
-        tipo = st.radio("Todas as salas têm mesmos dados?", ["Sim", "Não"], key="tipo_salas")
+    nome = st.text_input("Nome da Escola")
+    endereco = st.text_input("Endereço")
+    num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1)
+    tipo = st.radio("Todas as salas têm mesmos dados?", ["Sim", "Não"], key="tipo_salas")
+
+    with st.form("formulario_cadastro"):
+        st.subheader("Cadastro de Salas")
 
         nomes_salas_info, candidatos_info, blocos_info, andares_info = [], [], [], []
 
@@ -94,7 +94,7 @@ def mostrar_escolas():
     st.image('https://www.idecan.org.br/assets/img/logo.png', use_container_width=True)
     st.markdown("""<h1 style='text-align: center; color: #0E4D92;'>Escolas Cadastradas</h1>""", unsafe_allow_html=True)
     st.markdown("""<hr style='border:1px solid #0E4D92'>""", unsafe_allow_html=True)
-    
+
     df = carregar_dados()
     if df.empty:
         st.info("Nenhuma escola cadastrada.")
@@ -112,12 +112,11 @@ def excluir_escola(id_escola):
     df.to_csv(OUTPUT_FILE, index=False)
     st.success("Escola excluída com sucesso!")
 
-
 def login():
     st.image('https://www.idecan.org.br/assets/img/logo.png', use_container_width=True)
     st.markdown("""<h1 style='text-align: center; color: #0E4D92;'>Login</h1>""", unsafe_allow_html=True)
     st.markdown("""<hr style='border:1px solid #0E4D92'>""", unsafe_allow_html=True)
-    
+
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
     if st.button("Entrar"):
