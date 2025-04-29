@@ -31,7 +31,21 @@ def salvar_dados(df_novo, id_editar=None):
         df = pd.concat([df_existente, df_novo], ignore_index=True)
     else:
         df = df_novo
+    df = reindexar_escolas(df)
     df.to_csv(OUTPUT_FILE, index=False)
+
+def reindexar_escolas(df):
+    df_sorted = df.sort_values(by=["ID Escola", "ID Sala"]).reset_index(drop=True)
+    nova_df = []
+    escolas_unicas = df_sorted["Nome Escola"].unique()
+    for novo_id, nome_escola in enumerate(escolas_unicas, start=1):
+        escolas_filtradas = df_sorted[df_sorted["Nome Escola"] == nome_escola].copy()
+        escolas_filtradas["ID Escola"] = novo_id
+        escolas_filtradas["ID Sala"] = range(1, len(escolas_filtradas) + 1)
+        escolas_filtradas["Ordem da Sala"] = escolas_filtradas["ID Sala"]
+        escolas_filtradas["Numero de Salas"] = len(escolas_filtradas)
+        nova_df.append(escolas_filtradas)
+    return pd.concat(nova_df, ignore_index=True)
 
 def gerar_candidatos(id_escola, nome, endereco, num_salas, nomes_salas_info, candidatos_info, blocos_info, andares_info):
     linhas = []
@@ -150,6 +164,7 @@ def mostrar_escolas():
 def excluir_escola(id_escola):
     df = carregar_dados()
     df = df[df['ID Escola'] != id_escola]
+    df = reindexar_escolas(df)
     df.to_csv(OUTPUT_FILE, index=False)
     st.success("Escola excluída com sucesso!")
 
