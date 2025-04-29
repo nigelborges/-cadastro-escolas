@@ -8,19 +8,19 @@ SENHA_VALIDA = '1234'
 
 if 'logado' not in st.session_state:
     st.session_state['logado'] = False
-if 'modo_edicao' not in st.session_state:
-    st.session_state['modo_edicao'] = False
-if 'escola_em_edicao' not in st.session_state:
-    st.session_state['escola_em_edicao'] = None
 
 def carregar_dados():
     if os.path.exists(OUTPUT_FILE):
         return pd.read_csv(OUTPUT_FILE)
     return pd.DataFrame(columns=[
-        'ID Escola', 'Nome Escola', 'Endereco', 'ID Sala', 'Bloco', 'Andar',
-        'Ordem da Sala', 'Numero de Salas', 'Candidatos por Sala', 'Ordem do Candidato'])
+        'ID Escola', 'Nome Escola', 'Endereco', 'ID Sala', 'Nome da Sala', 'Bloco', 'Andar',
+        'Ordem da Sala', 'Numero de Salas', 'Candidatos por Sala', 'Ordem do Candidato'
+    ])
 
 def salvar_dados(df):
+    if os.path.exists(OUTPUT_FILE):
+        df_existente = pd.read_csv(OUTPUT_FILE)
+        df = pd.concat([df_existente, df], ignore_index=True)
     df.to_csv(OUTPUT_FILE, index=False)
 
 def gerar_candidatos(id_escola, nome, endereco, num_salas, candidatos_info, blocos_info, andares_info):
@@ -32,6 +32,7 @@ def gerar_candidatos(id_escola, nome, endereco, num_salas, candidatos_info, bloc
                 'Nome Escola': nome,
                 'Endereco': endereco,
                 'ID Sala': i,
+                'Nome da Sala': f"Sala {i}",
                 'Bloco': blocos_info[i-1],
                 'Andar': andares_info[i-1],
                 'Ordem da Sala': i,
@@ -45,7 +46,7 @@ def form_escola():
     st.subheader("Cadastro de Escola")
     nome = st.text_input("Nome da Escola")
     endereco = st.text_input("Endereço")
-    num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1, key='num_salas')
+    num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1)
 
     tipo = st.radio("Todas as salas têm mesmos dados?", ["Sim", "Não"])
 
@@ -72,20 +73,15 @@ def form_escola():
         df = carregar_dados()
         id_escola = df['ID Escola'].max() + 1 if not df.empty else 1
         nova_escola = gerar_candidatos(id_escola, nome, endereco, num_salas, candidatos_info, blocos_info, andares_info)
-        df = pd.concat([df, nova_escola], ignore_index=True)
-        salvar_dados(df)
+        salvar_dados(nova_escola)
         st.success("Escola cadastrada com sucesso!")
         st.experimental_rerun()
 
-def excluir_escola(id_escola):
-    df = carregar_dados()
-    df = df[df['ID Escola'] != id_escola]
-    salvar_dados(df)
-    st.success("Escola excluída com sucesso!")
-    st.experimental_rerun()
-
 def mostrar_escolas():
     df = carregar_dados()
+    if df.empty:
+        st.info("Nenhuma escola cadastrada.")
+        return
     for id_escola in sorted(df['ID Escola'].unique()):
         escola_df = df[df['ID Escola'] == id_escola]
         with st.expander(f"{escola_df['Nome Escola'].iloc[0]} - ID {id_escola}"):
@@ -96,6 +92,13 @@ def mostrar_escolas():
                     excluir_escola(id_escola)
             with col2:
                 st.markdown("(Editar: versão futura)")
+
+def excluir_escola(id_escola):
+    df = carregar_dados()
+    df = df[df['ID Escola'] != id_escola]
+    df.to_csv(OUTPUT_FILE, index=False)
+    st.success("Escola excluída com sucesso!")
+    st.experimental_rerun()
 
 def login():
     st.title("Login")
