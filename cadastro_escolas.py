@@ -27,10 +27,18 @@ def salvar_dados(df_novo, id_editar=None):
     if os.path.exists(OUTPUT_FILE):
         df_existente = pd.read_csv(OUTPUT_FILE)
         if id_editar is not None:
-            escola_antiga = df_existente[df_existente['ID Escola'] == id_editar]
-            df_existente = df_existente[df_existente['ID Escola'] != id_editar]
+            nome_ref = df_novo['Nome Escola'].iloc[0]
+            endereco_ref = df_novo['Endereco'].iloc[0]
 
-            # Mapear nomes antigos para ID Sala
+            escola_antiga = df_existente[
+                (df_existente['Nome Escola'] == nome_ref) &
+                (df_existente['Endereco'] == endereco_ref)
+            ]
+            df_existente = df_existente[~(
+                (df_existente['Nome Escola'] == nome_ref) &
+                (df_existente['Endereco'] == endereco_ref)
+            )]
+
             nomes_antigos = escola_antiga.drop_duplicates(subset='Nome da Sala')
             mapa_ids = {row['Nome da Sala']: row['ID Sala'] for _, row in nomes_antigos.iterrows()}
             usados = set()
@@ -54,6 +62,8 @@ def salvar_dados(df_novo, id_editar=None):
     df.to_csv(OUTPUT_FILE, index=False)
 
 def reindexar_escolas(df):
+    if df.empty:
+        return df
     df_sorted = df.sort_values(by=["Nome Escola", "Endereco", "ID Sala"]).reset_index(drop=True)
     nova_df = []
     escolas_agrupadas = df_sorted.groupby(['Nome Escola', 'Endereco'])
