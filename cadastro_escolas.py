@@ -15,24 +15,30 @@ dados = []
 # Funções para manipulação dos dados
 def salvar_csv():
     df = pd.DataFrame(dados)
+    if os.path.exists(OUTPUT_FILE):
+        df_existente = pd.read_csv(OUTPUT_FILE)
+        df = pd.concat([df_existente, df], ignore_index=True)
     df.to_csv(OUTPUT_FILE, index=False)
 
 def gerar_dados(nome_escola, endereco, num_salas, candidatos_info, blocos_info, andares_info):
     global dados
     id_escola = (max([d['ID Escola'] for d in dados]) + 1) if dados else 1
     for i in range(1, num_salas + 1):
-        registro = {
-            'ID Escola': id_escola,
-            'Nome Escola': nome_escola,
-            'Endereco': endereco,
-            'ID Sala': i,
-            'Bloco': blocos_info[i-1],
-            'Andar': andares_info[i-1],
-            'Ordem da Sala': i,
-            'Numero de Salas': num_salas,
-            'Candidatos por Sala': candidatos_info[i-1]
-        }
-        dados.append(registro)
+        num_candidatos = candidatos_info[i-1]
+        for candidato_ordem in range(1, num_candidatos + 1):
+            registro = {
+                'ID Escola': id_escola,
+                'Nome Escola': nome_escola,
+                'Endereco': endereco,
+                'ID Sala': i,
+                'Bloco': blocos_info[i-1],
+                'Andar': andares_info[i-1],
+                'Ordem da Sala': i,
+                'Numero de Salas': num_salas,
+                'Candidatos por Sala': num_candidatos,
+                'Ordem do Candidato': candidato_ordem
+            }
+            dados.append(registro)
 
 # Inicializa o app
 if __name__ == "__main__":
@@ -94,7 +100,7 @@ if __name__ == "__main__":
                     st.success(f"Escola cadastrada com sucesso! ({num_salas} salas)")
 
         if dados:
-            st.subheader("Escolas Cadastradas")
+            st.subheader("Candidatos Cadastrados")
             df = pd.DataFrame(dados)
             st.dataframe(df)
             st.download_button(
