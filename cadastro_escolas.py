@@ -84,11 +84,19 @@ def exportar_dados():
         df_salas = carregar_salas_por_escola(row['id'])
         df_salas['Nome Escola'] = row['nome']
         df_salas['Endereco'] = row['endereco']
-        frames.append(df_salas)
-    if frames:
-        df_final = pd.concat(frames)
-        return df_final[['Nome Escola', 'Endereco', 'nome_sala', 'bloco', 'andar', 'ordem_sala', 'candidatos_sala']]
-    return pd.DataFrame()
+        for _, sala in df_salas.iterrows():
+            for ordem in range(1, sala['candidatos_sala'] + 1):
+                frames.append({
+                    'Nome Escola': sala['Nome Escola'],
+                    'Endereco': sala['Endereco'],
+                    'Nome da Sala': sala['nome_sala'],
+                    'Bloco': sala['bloco'],
+                    'Andar': sala['andar'],
+                    'Ordem da Sala': sala['ordem_sala'],
+                    'Numero de Salas': len(df_salas),
+                    'Ordem do Candidato': ordem
+                })
+    return pd.DataFrame(frames)
 
 def form_escola():
     st.image('https://www.idecan.org.br/assets/img/logo.png', use_container_width=True)
@@ -109,19 +117,21 @@ def form_escola():
         salas_existentes = carregar_salas_por_escola(editar_id).to_dict("records")
         num_salas = len(salas_existentes)
 
-    nome = st.text_input("Nome da Escola", value=nome)
-    endereco = st.text_input("Endereço", value=endereco)
-    num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1, value=num_salas)
+    with st.container():
+        nome = st.text_input("Nome da Escola", value=nome)
+        endereco = st.text_input("Endereço", value=endereco)
+        num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1, value=num_salas)
+        tipo = st.radio("Todas as salas têm os mesmos dados?", ["Sim", "Não"], index=0 if not salas_existentes else 1)
 
-    tipo = st.radio("Todas as salas têm os mesmos dados?", ["Sim", "Não"])
-
+    salas = []
     if tipo == "Sim":
-        base_nome = st.text_input("Nome base da Sala", value="Sala")
-        bloco = st.text_input("Bloco", value="A")
-        andar = st.text_input("Andar", value="Térreo")
-        candidatos = st.number_input("Candidatos por Sala", min_value=1, step=1, value=40)
-
-        salas = []
+        col1, col2 = st.columns(2)
+        with col1:
+            base_nome = st.text_input("Nome base da Sala", value="Sala")
+            bloco = st.text_input("Bloco", value="A")
+        with col2:
+            andar = st.text_input("Andar", value="Térreo")
+            candidatos = st.number_input("Candidatos por Sala", min_value=1, step=1, value=40)
         for i in range(int(num_salas)):
             salas.append({
                 "nome_sala": f"{base_nome} {i+1:02d}",
@@ -131,7 +141,7 @@ def form_escola():
             })
     else:
         if salas_existentes:
-            df_salas = pd.DataFrame(salas_existentes)
+            df_salas = pd.DataFrame(salas_existentes)[['nome_sala', 'bloco', 'andar', 'candidatos_sala']]
         else:
             df_salas = pd.DataFrame([{
                 "nome_sala": f"Sala {i+1:02d}",
@@ -140,17 +150,20 @@ def form_escola():
                 "candidatos_sala": 40
             } for i in range(int(num_salas))])
 
+        st.markdown("### Cadastro das Salas")
         df_editada = st.data_editor(df_salas, num_rows="dynamic", key="editor_salas")
         salas = df_editada.to_dict("records")
 
-    if st.button("Salvar Alterações" if editar_id else "Salvar Cadastro"):
-        if not nome or not endereco or any(not sala['nome_sala'] for sala in salas):
-            st.warning("Todos os campos são obrigatórios.")
-        else:
-            salvar_escola_banco(nome, endereco, salas, editar_id=editar_id)
-            st.success("Escola atualizada com sucesso!" if editar_id else "Escola cadastrada com sucesso!")
-            st.session_state['modo_edicao'] = False
-            st.session_state['escola_em_edicao'] = None
+    col_salvar, _ = st.columns(2)
+    with col_salvar:
+        if st.button("💾 Salvar Alterações" if editar_id else "✅ Salvar Cadastro", use_container_width=True):
+            if not nome or not endereco or any(not sala['nome_sala'] for sala in salas):
+                st.warning("Todos os campos são obrigatórios.")
+            else:
+                salvar_escola_banco(nome, endereco, salas, editar_id=editar_id)
+                st.success("Escola atualizada com sucesso!" if editar_id else "Escola cadastrada com sucesso!")
+                st.session_state['modo_edicao'] = False
+                st.session_state['escola_em_edicao'] = None
 
 def visualizar():
     st.markdown("# Escolas Cadastradas")
@@ -159,23 +172,23 @@ def visualizar():
         st.info("Nenhuma escola cadastrada.")
         return
     for _, row in df.iterrows():
-        with st.expander(f"{row['nome']} - {row['endereco']}"):
+        with st.expander(f"🏫 {row['nome']} - {row['endereco']}"):
             st.write(f"ID: {row['id']}")
             df_salas = carregar_salas_por_escola(row['id'])
             st.dataframe(df_salas)
             col1, col2, col3 = st.columns(3)
             with col1:
-                if st.button(f"Editar ID {row['id']}"):
+                if st.button(f"✏️ Editar ID {row['id']}"):
                     st.session_state['modo_edicao'] = True
                     st.session_state['escola_em_edicao'] = row['id']
                     st.session_state['pagina_atual'] = "Cadastrar Escola"
             with col2:
-                if st.button(f"Excluir ID {row['id']}"):
+                if st.button(f"🗑️ Excluir ID {row['id']}"):
                     excluir_escola(row['id'])
                     st.experimental_rerun()
             with col3:
-                if st.download_button("Exportar CSV", exportar_dados().to_csv(index=False).encode('utf-8'), "escolas_export.csv"):
-                    st.success("Exportado com sucesso!")
+                df_exportar = exportar_dados()
+                st.download_button("📁 Exportar CSV", df_exportar.to_csv(index=False).encode('utf-8'), "escolas_export.csv")
 
 def login():
     st.image('https://www.idecan.org.br/assets/img/logo.png', use_container_width=True)
@@ -184,7 +197,7 @@ def login():
 
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
-    if st.button("Entrar"):
+    if st.button("🔐 Entrar"):
         if usuario == USUARIO_VALIDO and senha == SENHA_VALIDA:
             st.session_state['logado'] = True
         else:
