@@ -77,25 +77,25 @@ def excluir_escola(escola_id):
     conn.commit()
     conn.close()
 
-def exportar_dados():
+def exportar_dados_por_escola(escola_id):
     df_escolas = carregar_escolas()
+    escola = df_escolas[df_escolas['id'] == escola_id].iloc[0]
+    df_salas = carregar_salas_por_escola(escola_id)
     candidatos = []
-    for _, escola in df_escolas.iterrows():
-        df_salas = carregar_salas_por_escola(escola['id'])
-        for _, sala in df_salas.iterrows():
-            for ordem in range(1, sala['candidatos_sala'] + 1):
-                candidatos.append({
-                    'ID Escola': escola['id'],
-                    'Nome Escola': escola['nome'],
-                    'Endereco': escola['endereco'],
-                    'ID Sala': sala['ordem_sala'],
-                    'Nome da Sala': sala['nome_sala'],
-                    'Bloco': sala['bloco'],
-                    'Andar': sala['andar'],
-                    'Ordem da Sala': sala['ordem_sala'],
-                    'Numero de Salas': len(df_salas),
-                    'Ordem do Candidato': ordem
-                })
+    for _, sala in df_salas.iterrows():
+        for ordem in range(1, sala['candidatos_sala'] + 1):
+            candidatos.append({
+                'ID Escola': escola['id'],
+                'Nome Escola': escola['nome'],
+                'Endereco': escola['endereco'],
+                'ID Sala': sala['ordem_sala'],
+                'Nome da Sala': sala['nome_sala'],
+                'Bloco': sala['bloco'],
+                'Andar': sala['andar'],
+                'Ordem da Sala': sala['ordem_sala'],
+                'Numero de Salas': len(df_salas),
+                'Ordem do Candidato': ordem
+            })
     return pd.DataFrame(candidatos)
 
 def visualizar():
@@ -120,10 +120,11 @@ def visualizar():
                     excluir_escola(row['id'])
                     st.experimental_rerun()
             with col3:
-                df_exportar = exportar_dados()
-                st.download_button(
-                    "📁 Exportar CSV",
-                    df_exportar.to_csv(index=False).encode('utf-8'),
-                    "escolas_export.csv",
-                    key=f"exportar_{row['id']}"
-                )
+                if st.button(f"📁 Exportar CSV {row['id']}", key=f"botao_exportar_{row['id']}"):
+                    df_exportar = exportar_dados_por_escola(row['id'])
+                    st.download_button(
+                        "⬇️ Baixar CSV",
+                        df_exportar.to_csv(index=False).encode('utf-8'),
+                        file_name=f"escola_{row['id']}.csv",
+                        key=f"download_{row['id']}"
+                    )
