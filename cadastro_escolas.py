@@ -26,7 +26,7 @@ def salvar_backup_csv():
 def carregar_escolas():
     if 'escolas' not in st.session_state:
         return pd.DataFrame(columns=['id', 'nome', 'endereco'])
-    return pd.DataFrame([{'id': idx, 'nome': esc['nome'], 'endereco': esc['endereco']} for idx, esc in enumerate(st.session_state['escolas'])])
+    return pd.DataFrame([{'id': idx, 'id_visivel': idx + 1, 'nome': esc['nome'], 'endereco': esc['endereco']} for idx, esc in enumerate(st.session_state['escolas'])])
 
 def carregar_salas_por_escola(escola_id):
     if 'escolas' not in st.session_state or escola_id >= len(st.session_state['escolas']):
@@ -112,7 +112,7 @@ def visualizar():
             st.subheader(f"📄 Salas da escola {row['nome']}")
             st.caption(f"Endereço: {row['endereco']}")
             st.markdown("---")
-            st.write(f"ID: {row['id']}")
+            st.write(f"ID: {row['id_visivel']}")
             df_salas = carregar_salas_por_escola(row['id'])
             df_salas_visual = df_salas.copy()
             id_sala_counter = 1
