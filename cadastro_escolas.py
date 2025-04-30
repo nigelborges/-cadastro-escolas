@@ -235,9 +235,11 @@ def mostrar_menu():
             st.experimental_rerun()
     
 
-if os.path.exists(SAVE_FILE) and os.path.getsize(SAVE_FILE) > 0:
+if os.path.exists(SAVE_FILE):
     try:
         df_loaded = pd.read_csv(SAVE_FILE)
+        if df_loaded.empty or df_loaded.columns.size == 0:
+            raise ValueError("Arquivo vazio ou inválido.")
         escolas_dict = {}
         for _, row in df_loaded.iterrows():
             key = (row['ID Escola'], row['Nome Escola'], row['Endereco'])
