@@ -92,15 +92,13 @@ def visualizar():
     st.image("https://www.idecan.org.br/assets/img/logo.png", use_container_width=True)
     st.title("📦 Exportação de Escolas")
     if st.button("📦 Exportar Todas as Escolas", use_container_width=True):
-        if st.button("📦 Exportar Todas as Escolas", use_container_width=True):
-            df_geral = exportar_dados_geral()
-            st.download_button(
-                "⬇️ Baixar CSV Geral",
-                df_geral.to_csv(index=False).encode('utf-8'),
-                file_name="todas_escolas.csv",
-                use_container_width=True
-            ):
         df_geral = exportar_dados_geral()
+        st.download_button(
+            "⬇️ Baixar CSV Geral",
+            df_geral.to_csv(index=False).encode('utf-8'),
+            file_name="todas_escolas.csv",
+            use_container_width=True
+        )
         st.download_button(
             "⬇️ Baixar CSV Geral",
             df_geral.to_csv(index=False).encode('utf-8'),
