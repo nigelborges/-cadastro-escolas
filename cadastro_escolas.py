@@ -235,7 +235,7 @@ def mostrar_menu():
             st.experimental_rerun()
     
 
-if os.path.exists(SAVE_FILE):
+if os.path.exists(SAVE_FILE) and os.path.getsize(SAVE_FILE) > 0:
     try:
         df_loaded = pd.read_csv(SAVE_FILE)
         escolas_dict = {}
@@ -264,5 +264,5 @@ if __name__ == '__main__':
         st.session_state['escola_em_edicao'] = None
     if 'pagina_atual' not in st.session_state:
         st.session_state['pagina_atual'] = 'Cadastrar Escola'
-    st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
+    
     mostrar_menu()
