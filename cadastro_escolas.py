@@ -207,7 +207,7 @@ def form_escola():
                 id_sala_counter += 1
             id_salas.append(sala_ids[nome])
         df_salas.insert(0, 'ID Sala', id_salas)
-        df_editada = st.data_editor(df_salas, num_rows="dynamic", key="editor_salas")(df_salas, num_rows="dynamic", key="editor_salas")
+        df_editada = st.data_editor(df_salas, num_rows="dynamic", key="editor_salas")
         salas = df_editada.to_dict("records")
 
     if st.button("Salvar Alterações" if editar_id else "Salvar Cadastro"):
