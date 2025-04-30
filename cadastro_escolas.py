@@ -220,19 +220,6 @@ def form_escola():
             salvar_backup_csv()
             st.session_state['escola_em_edicao'] = None
 
-def login():
-    st.image("https://www.idecan.org.br/assets/img/logo.png", use_container_width=True)
-    st.title("🔐 Acesso ao Sistema")
-    st.divider()
-    usuario = st.text_input("Usuário")
-    senha = st.text_input("Senha", type="password")
-    if st.button("Entrar"):
-        if usuario == USUARIO_VALIDO and senha == SENHA_VALIDA:
-            st.session_state['logado'] = True
-            st.rerun()
-        else:
-            st.error("Usuário ou senha incorretos")
-
 def mostrar_menu():
     st.sidebar.title("Menu")
     opcao = st.sidebar.radio("Navegação", ["Cadastrar Escola", "Visualizar Escolas", "Sair"], index=0)
@@ -276,7 +263,4 @@ if __name__ == '__main__':
     if 'pagina_atual' not in st.session_state:
         st.session_state['pagina_atual'] = 'Cadastrar Escola'
     st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
-    if not st.session_state['logado']:
-        login()
-    else:
-        mostrar_menu()
+    mostrar_menu()
