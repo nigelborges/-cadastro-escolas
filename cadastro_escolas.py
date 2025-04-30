@@ -7,8 +7,6 @@ DB_FILE = 'escolas.db'
 USUARIO_VALIDO = 'admin'
 SENHA_VALIDA = '1234'
 
-# Forçar logout ao iniciar (remova após testes)
-st.session_state['logado'] = False
 
 if 'modo_edicao' not in st.session_state:
     st.session_state['modo_edicao'] = False
