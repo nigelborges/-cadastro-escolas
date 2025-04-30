@@ -114,6 +114,26 @@ def form_escola():
             st.session_state['modo_edicao'] = False
             st.session_state['escola_em_edicao'] = None
 
+def login():
+    st.markdown("# Login")
+    usuario = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
+    if st.button("Entrar"):
+        if usuario == USUARIO_VALIDO and senha == SENHA_VALIDA:
+            st.session_state['logado'] = True
+            st.experimental_rerun()
+        else:
+            st.error("Usuário ou senha incorretos")
+
+def mostrar_menu():
+    st.sidebar.title("Menu")
+    opcao = st.sidebar.radio("Navegação", ["Cadastrar Escola", "Sair"], index=0)
+    if opcao == "Cadastrar Escola":
+        form_escola()
+    elif opcao == "Sair":
+        st.session_state['logado'] = False
+        st.experimental_rerun()
+
 if __name__ == '__main__':
     st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
     if not st.session_state['logado']:
