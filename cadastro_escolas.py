@@ -66,6 +66,10 @@ def mostrar_menu():
         st.session_state['logado'] = False
         st.rerun()
 
+# Garantir chave 'logado' inicializada
+if 'logado' not in st.session_state:
+    st.session_state['logado'] = False
+
 if __name__ == '__main__':
     st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
     if not st.session_state['logado']:
