@@ -53,7 +53,7 @@ def salvar_escola_banco(nome, endereco, salas, editar_id=None):
             INSERT INTO salas (
                 escola_id, nome_sala, bloco, andar, ordem_sala, candidatos_sala, ordem_candidato
             ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (escola_id, sala['nome'], sala['bloco'], sala['andar'], i + 1, sala['candidatos'], 1))
+        """, (escola_id, sala['nome_sala'], sala['bloco'], sala['andar'], i + 1, sala['candidatos_sala'], 1))
     conn.commit()
     conn.close()
 
@@ -113,17 +113,38 @@ def form_escola():
     endereco = st.text_input("Endereço", value=endereco)
     num_salas = st.number_input("Quantidade de Salas", min_value=1, step=1, value=num_salas)
 
-    salas = []
-    for i in range(int(num_salas)):
-        st.markdown(f"### Sala {i+1}")
-        nome_sala = st.text_input(f"Nome da Sala {i+1}", value=(salas_existentes[i]['nome_sala'] if i < len(salas_existentes) else ""), key=f"nome_sala_{i}")
-        bloco = st.text_input(f"Bloco Sala {i+1}", value=(salas_existentes[i]['bloco'] if i < len(salas_existentes) else ""), key=f"bloco_{i}")
-        andar = st.text_input(f"Andar Sala {i+1}", value=(salas_existentes[i]['andar'] if i < len(salas_existentes) else ""), key=f"andar_{i}")
-        candidatos = st.number_input(f"Candidatos Sala {i+1}", min_value=1, step=1, value=(salas_existentes[i]['candidatos_sala'] if i < len(salas_existentes) else 1), key=f"candidatos_{i}")
-        salas.append({"nome": nome_sala, "bloco": bloco, "andar": andar, "candidatos": candidatos})
+    tipo = st.radio("Todas as salas têm os mesmos dados?", ["Sim", "Não"])
+
+    if tipo == "Sim":
+        base_nome = st.text_input("Nome base da Sala", value="Sala")
+        bloco = st.text_input("Bloco", value="A")
+        andar = st.text_input("Andar", value="Térreo")
+        candidatos = st.number_input("Candidatos por Sala", min_value=1, step=1, value=40)
+
+        salas = []
+        for i in range(int(num_salas)):
+            salas.append({
+                "nome_sala": f"{base_nome} {i+1:02d}",
+                "bloco": bloco,
+                "andar": andar,
+                "candidatos_sala": candidatos
+            })
+    else:
+        if salas_existentes:
+            df_salas = pd.DataFrame(salas_existentes)
+        else:
+            df_salas = pd.DataFrame([{
+                "nome_sala": f"Sala {i+1:02d}",
+                "bloco": "A",
+                "andar": "Térreo",
+                "candidatos_sala": 40
+            } for i in range(int(num_salas))])
+
+        df_editada = st.data_editor(df_salas, num_rows="dynamic", key="editor_salas")
+        salas = df_editada.to_dict("records")
 
     if st.button("Salvar Alterações" if editar_id else "Salvar Cadastro"):
-        if not nome or not endereco or any(not sala['nome'] for sala in salas):
+        if not nome or not endereco or any(not sala['nome_sala'] for sala in salas):
             st.warning("Todos os campos são obrigatórios.")
         else:
             salvar_escola_banco(nome, endereco, salas, editar_id=editar_id)
