@@ -39,4 +39,38 @@ def conectar():
         )""")
     return conn
 
-# (restante do código permanece igual — funções de salvar, exportar, visualizar, etc.)
+def login():
+    st.image('https://www.idecan.org.br/assets/img/logo.png', use_container_width=True)
+    st.markdown("""<h1 style='text-align: center; color: #0E4D92;'>Login</h1>""", unsafe_allow_html=True)
+    st.markdown("""<hr style='border:1px solid #0E4D92'>""", unsafe_allow_html=True)
+
+    usuario = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
+    if st.button("🔐 Entrar"):
+        if usuario == USUARIO_VALIDO and senha == SENHA_VALIDA:
+            st.session_state['logado'] = True
+            st.success("Login realizado com sucesso!")
+            st.rerun()
+        else:
+            st.error("Usuário ou senha incorretos")
+
+def mostrar_menu():
+    st.sidebar.title("Menu")
+    opcao = st.sidebar.radio("Navegação", ["Cadastrar Escola", "Visualizar Escolas", "Sair"],
+                             index=["Cadastrar Escola", "Visualizar Escolas", "Sair"].index(st.session_state['pagina_atual']))
+    st.session_state['pagina_atual'] = opcao
+
+    if opcao == "Cadastrar Escola":
+        form_escola()
+    elif opcao == "Visualizar Escolas":
+        visualizar()
+    elif opcao == "Sair":
+        st.session_state['logado'] = False
+        st.rerun()
+
+if __name__ == '__main__':
+    st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
+    if not st.session_state['logado']:
+        login()
+    else:
+        mostrar_menu()
