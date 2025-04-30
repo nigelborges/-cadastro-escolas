@@ -104,17 +104,16 @@ def visualizar():
 
     st.title("📋 Escolas Cadastradas")
     st.divider()
-    df = carregar_escolas()
-    if df.empty:
+    if 'escolas' not in st.session_state or not st.session_state['escolas']:
         st.info("Nenhuma escola cadastrada.")
         return
-    for _, row in df.iterrows():
-        with st.expander(f"🏫 {row['nome']} - {row['endereco']}"):
-            st.subheader(f"📄 Salas da escola {row['nome']}")
-            st.caption(f"Endereço: {row['endereco']}")
+    for idx, escola in enumerate(st.session_state['escolas']):
+        with st.expander(f"🏫 {escola['nome']} - {escola['endereco']}"):
+            st.subheader(f"📄 Salas da escola {escola['nome']}")
+            st.caption(f"Endereço: {escola['endereco']}")
             st.markdown("---")
-            st.write(f"ID: {row['id_visivel']}")
-            df_salas = carregar_salas_por_escola(row['id'])
+            st.write(f"ID: {idx + 1}")
+            df_salas = carregar_salas_por_escola(idx)
             df_salas_visual = df_salas.copy()
             id_sala_counter = 1
             sala_ids = {}
@@ -126,23 +125,24 @@ def visualizar():
                     id_sala_counter += 1
                 id_salas.append(sala_ids[nome])
             df_salas_visual.insert(0, "ID Sala", id_salas)
-            df_salas_visual.insert(0, "Nome Escola", row['nome'])
-            df_salas_visual.insert(1, "Endereco", row['endereco'])
+            df_salas_visual.insert(0, "Nome Escola", escola['nome'])
+            df_salas_visual.insert(1, "Endereco", escola['endereco'])
             st.dataframe(df_salas_visual)
             col1, col2, col3 = st.columns([1, 1, 2])
             with col1:
-                if st.button(f"✏️ Editar", key=f"editar_{row['id']}", use_container_width=True):
+                if st.button(f"✏️ Editar", key=f"editar_{idx}", use_container_width=True):
                     st.session_state['modo_edicao'] = True
-                    st.session_state['escola_em_edicao'] = row['id']
+                    st.session_state['escola_em_edicao'] = idx
                     st.session_state['pagina_atual'] = "Cadastrar Escola"
                     st.experimental_rerun()
             with col2:
-                if st.button(f"🗑️ Excluir", key=f"excluir_{row['id']}", use_container_width=True):
-                    st.session_state['escolas'].pop(row['id'])
-                    st.rerun()
+                if st.button(f"🗑️ Excluir", key=f"excluir_{idx}", use_container_width=True):
+                    st.session_state['escolas'].pop(idx)
+                    salvar_backup_csv()
+                    st.experimental_rerun()
             with col3:
-                if st.button(f"📁 Exportar CSV", key=f"botao_exportar_{row['id']}", use_container_width=True):
-                    df_exportar = exportar_dados_por_escola(row['id'])
+                if st.button(f"📁 Exportar CSV", key=f"botao_exportar_{idx}", use_container_width=True):
+                    df_exportar = exportar_dados_por_escola(idx)
                     st.download_button(
                         "⬇️ Baixar CSV",
                         df_exportar.to_csv(index=False).encode('utf-8'),
@@ -221,11 +221,18 @@ def form_escola():
 
 def mostrar_menu():
     st.sidebar.title("Menu")
-    opcao = st.sidebar.radio("Navegação", ["Cadastrar Escola", "Visualizar Escolas"], index=0)
+    opcao = st.sidebar.radio("Navegação", ["Cadastrar Escola", "Visualizar Escolas", "Limpar Todas"], index=0)
     if opcao == "Cadastrar Escola":
         form_escola()
     elif opcao == "Visualizar Escolas":
         visualizar()
+    elif opcao == "Limpar Todas":
+        st.warning("Esta ação apagará todas as escolas cadastradas.")
+        if st.button("⚠️ Confirmar Limpeza Total", type="primary"):
+            st.session_state['escolas'] = []
+            salvar_backup_csv()
+            st.success("Todos os dados foram apagados.")
+            st.experimental_rerun()
     
 
 if os.path.exists(SAVE_FILE):
