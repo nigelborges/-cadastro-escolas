@@ -130,13 +130,13 @@ def visualizar():
             st.dataframe(df_salas_visual)
             col1, col2, col3 = st.columns([1, 1, 2])
             with col1:
-                if st.button(f"✏️ Editar", use_container_width=True):
+                if st.button(f"✏️ Editar", key=f"editar_{row['id']}", use_container_width=True):
                     st.session_state['modo_edicao'] = True
                     st.session_state['escola_em_edicao'] = row['id']
                     st.session_state['pagina_atual'] = "Cadastrar Escola"
                     st.rerun()
             with col2:
-                if st.button(f"🗑️ Excluir", use_container_width=True):
+                if st.button(f"🗑️ Excluir", key=f"excluir_{row['id']}", use_container_width=True):
                     st.session_state['escolas'].pop(row['id'])
                     st.rerun()
             with col3:
