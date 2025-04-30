@@ -146,8 +146,8 @@ def visualizar():
                     st.download_button(
                         "⬇️ Baixar CSV",
                         df_exportar.to_csv(index=False).encode('utf-8'),
-                        file_name=f"escola_{row['id']}.csv",
-                        key=f"download_{row['id']}"
+                        file_name=f"escola_{idx}.csv",
+                        key=f"download_{idx}"
                     )
 
 def form_escola():
