@@ -33,6 +33,33 @@ def carregar_salas_por_escola(escola_id):
         return pd.DataFrame(columns=['nome_sala', 'bloco', 'andar', 'candidatos_sala'])
     return pd.DataFrame(st.session_state['escolas'][escola_id]['salas'])
 
+def exportar_dados_por_escola(escola_id):
+    escola = carregar_escolas().loc[escola_id]
+    df_salas = carregar_salas_por_escola(escola_id)
+    candidatos = []
+    sala_ids = {}
+    id_sala_counter = 1
+    for i, sala in df_salas.iterrows():
+        nome = sala['nome_sala']
+        if nome not in sala_ids:
+            sala_ids[nome] = id_sala_counter
+            id_sala_counter += 1
+        id_sala = sala_ids[nome]
+        for ordem in range(1, sala['candidatos_sala'] + 1):
+            candidatos.append({
+                'ID Escola': escola_id,
+                'Nome Escola': escola['nome'],
+                'Endereco': escola['endereco'],
+                'ID Sala': id_sala,
+                'Nome da Sala': sala['nome_sala'],
+                'Bloco': sala['bloco'],
+                'Andar': sala['andar'],
+                'Ordem da Sala': i + 1,
+                'Numero de Salas': len(df_salas),
+                'Ordem do Candidato': ordem
+            })
+    return pd.DataFrame(candidatos)
+
 def exportar_dados_geral():
     df_escolas = carregar_escolas()
     todos = []
@@ -62,8 +89,17 @@ def exportar_dados_geral():
     return pd.DataFrame(todos)
 
 def visualizar():
-    st.image("https://www.idecan.org.br/assets/img/logo.png", use_container_width=True)  # logo
-    if st.button("📦 Exportar Todas as Escolas", use_container_width=True):
+    st.image("https://www.idecan.org.br/assets/img/logo.png", use_container_width=True)
+    st.title("📦 Exportação de Escolas")  # logo
+        with st.container():
+        if st.button("📦 Exportar Todas as Escolas", use_container_width=True):
+            df_geral = exportar_dados_geral()
+            st.download_button(
+                "⬇️ Baixar CSV Geral",
+                df_geral.to_csv(index=False).encode('utf-8'),
+                file_name="todas_escolas.csv",
+                use_container_width=True
+            ):
         df_geral = exportar_dados_geral()
         st.download_button(
             "⬇️ Baixar CSV Geral",
@@ -79,7 +115,10 @@ def visualizar():
         st.info("Nenhuma escola cadastrada.")
         return
     for _, row in df.iterrows():
-        with st.expander(f"🏫 {row['nome']} - {row['endereco']}"):
+                with st.expander(f"🏫 {row['nome']} - {row['endereco']}"):
+            st.subheader(f"📄 Salas da escola {row['nome']}")
+            st.caption(f"Endereço: {row['endereco']}")
+            st.markdown("---")
             st.write(f"ID: {row['id']}")
             df_salas = carregar_salas_por_escola(row['id'])
             df_salas_visual = df_salas.copy()
@@ -164,7 +203,18 @@ def form_escola():
                 "candidatos_sala": 40
             } for i in range(int(num_salas))])
         st.markdown("### Cadastro das Salas")
-        df_editada = st.data_editor(df_salas, num_rows="dynamic", key="editor_salas")
+        # aplicar ID Sala conforme nome
+            id_sala_counter = 1
+            sala_ids = {}
+            id_salas = []
+            for _, sala in df_salas.iterrows():
+                nome = sala['nome_sala']
+                if nome not in sala_ids:
+                    sala_ids[nome] = id_sala_counter
+                    id_sala_counter += 1
+                id_salas.append(sala_ids[nome])
+            df_salas.insert(0, 'ID Sala', id_salas)
+            df_editada = st.data_editor(df_salas, num_rows="dynamic", key="editor_salas")
         salas = df_editada.to_dict("records")
 
     if st.button("Salvar Alterações" if editar_id else "Salvar Cadastro"):
