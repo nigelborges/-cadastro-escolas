@@ -93,12 +93,7 @@ def visualizar():
     st.title("📦 Exportação de Escolas")
     if st.button("📦 Exportar Todas as Escolas", use_container_width=True):
         df_geral = exportar_dados_geral()
-        st.download_button(
-            "⬇️ Baixar CSV Geral",
-            df_geral.to_csv(index=False).encode('utf-8'),
-            file_name="todas_escolas.csv",
-            use_container_width=True
-        )
+        
         st.download_button(
             "⬇️ Baixar CSV Geral",
             df_geral.to_csv(index=False).encode('utf-8'),
@@ -113,7 +108,7 @@ def visualizar():
         st.info("Nenhuma escola cadastrada.")
         return
     for _, row in df.iterrows():
-                with st.expander(f"🏫 {row['nome']} - {row['endereco']}"):
+        with st.expander(f"🏫 {row['nome']} - {row['endereco']}"):
             st.subheader(f"📄 Salas da escola {row['nome']}")
             st.caption(f"Endereço: {row['endereco']}")
             st.markdown("---")
