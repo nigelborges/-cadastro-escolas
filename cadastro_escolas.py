@@ -40,7 +40,7 @@ def exportar_dados_geral():
         df_salas = carregar_salas_por_escola(escola['id'])
         id_sala_counter = 1
         sala_ids = {}
-        for _, sala in df_salas.iterrows():
+        for i, sala in df_salas.iterrows():
             nome = sala['nome_sala']
             if nome not in sala_ids:
                 sala_ids[nome] = id_sala_counter
@@ -55,7 +55,7 @@ def exportar_dados_geral():
                     'Nome da Sala': sala['nome_sala'],
                     'Bloco': sala['bloco'],
                     'Andar': sala['andar'],
-                    'Ordem da Sala': sala['ordem_sala'],
+                    'Ordem da Sala': i + 1,
                     'Numero de Salas': len(df_salas),
                     'Ordem do Candidato': ordem
                 })
