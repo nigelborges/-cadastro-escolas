@@ -239,8 +239,6 @@ def mostrar_menu():
 if os.path.exists(SAVE_FILE):
     try:
         df_loaded = pd.read_csv(SAVE_FILE)
-        if df_loaded.empty or df_loaded.columns.size == 0:
-            raise ValueError("Arquivo vazio ou inválido.")
         escolas_dict = {}
         for _, row in df_loaded.iterrows():
             key = (row['ID Escola'], row['Nome Escola'], row['Endereco'])
@@ -257,7 +255,7 @@ if os.path.exists(SAVE_FILE):
             for k, v in escolas_dict.items()
         ]
     except Exception as e:
-    pass  # Silencia erros de leitura do CSV sem interferir na execução
+        pass  # Silencia erros de leitura do CSV sem interferir na execução
 
 if __name__ == '__main__':
     # Inicializar session_state com segurança
