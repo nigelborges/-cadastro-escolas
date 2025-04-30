@@ -82,7 +82,20 @@ def visualizar():
         with st.expander(f"🏫 {row['nome']} - {row['endereco']}"):
             st.write(f"ID: {row['id']}")
             df_salas = carregar_salas_por_escola(row['id'])
-            st.dataframe(df_salas)
+            df_salas_visual = df_salas.copy()
+            id_sala_counter = 1
+            sala_ids = {}
+            id_salas = []
+            for _, sala in df_salas_visual.iterrows():
+                nome = sala['nome_sala']
+                if nome not in sala_ids:
+                    sala_ids[nome] = id_sala_counter
+                    id_sala_counter += 1
+                id_salas.append(sala_ids[nome])
+            df_salas_visual.insert(0, "ID Sala", id_salas)
+            df_salas_visual.insert(0, "Nome Escola", row['nome'])
+            df_salas_visual.insert(1, "Endereco", row['endereco'])
+            st.dataframe(df_salas_visual)
             col1, col2, col3 = st.columns([1, 1, 2])
             with col1:
                 if st.button(f"✏️ Editar", use_container_width=True):
