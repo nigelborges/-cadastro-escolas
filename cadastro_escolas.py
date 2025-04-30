@@ -22,6 +22,7 @@ def salvar_escola_banco(nome, endereco, salas, editar_id=None):
 def salvar_backup_csv():
     df = exportar_dados_geral()
     df.to_csv(SAVE_FILE, index=False)
+    st.toast("Backup salvo!")
 
 def carregar_escolas():
     if 'escolas' not in st.session_state:
@@ -134,7 +135,7 @@ def visualizar():
                     st.session_state['modo_edicao'] = True
                     st.session_state['escola_em_edicao'] = row['id']
                     st.session_state['pagina_atual'] = "Cadastrar Escola"
-                    st.rerun()
+                    st.experimental_rerun()
             with col2:
                 if st.button(f"🗑️ Excluir", key=f"excluir_{row['id']}", use_container_width=True):
                     st.session_state['escolas'].pop(row['id'])
@@ -158,14 +159,12 @@ def form_escola():
     num_salas = 1
     salas_existentes = []
 
-    if editar_id:
-        conn = conectar()
-        escola = pd.read_sql_query("SELECT * FROM escolas WHERE id = ?", conn, params=(editar_id,)).iloc[0]
+    if editar_id and 'escolas' in st.session_state and editar_id < len(st.session_state['escolas']):
+        escola = st.session_state['escolas'][editar_id]
         nome = escola['nome']
         endereco = escola['endereco']
-        salas_existentes = pd.read_sql_query("SELECT * FROM salas WHERE escola_id = ?", conn, params=(editar_id,)).to_dict("records")
+        salas_existentes = escola['salas']
         num_salas = len(salas_existentes)
-        conn.close()
 
     nome = st.text_input("Nome da Escola", value=nome)
     endereco = st.text_input("Endereço", value=endereco)
@@ -251,8 +250,8 @@ if os.path.exists(SAVE_FILE):
         st.warning(f"Erro ao carregar backup: {e}")
 
 if __name__ == '__main__':
-        # Inicializar session_state com segurança
-        if 'modo_edicao' not in st.session_state:
+    # Inicializar session_state com segurança
+    if 'modo_edicao' not in st.session_state:
         st.session_state['modo_edicao'] = False
     if 'escola_em_edicao' not in st.session_state:
         st.session_state['escola_em_edicao'] = None
