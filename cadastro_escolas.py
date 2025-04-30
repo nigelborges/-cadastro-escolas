@@ -257,9 +257,7 @@ if os.path.exists(SAVE_FILE):
             for k, v in escolas_dict.items()
         ]
     except Exception as e:
-    if not st.session_state.get('escolas'):
-        pass
-    else:
+    if st.session_state.get('escolas'):
         st.warning(f"Erro ao carregar backup: {e}")
 
 if __name__ == '__main__':
