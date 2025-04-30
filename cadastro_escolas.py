@@ -100,7 +100,8 @@ def visualizar():
             use_container_width=True
         )
 
-    st.markdown("# Escolas Cadastradas")
+    st.title("📋 Escolas Cadastradas")
+    st.divider()
     df = carregar_escolas()
     if df.empty:
         st.info("Nenhuma escola cadastrada.")
@@ -110,15 +111,15 @@ def visualizar():
             st.write(f"ID: {row['id']}")
             df_salas = carregar_salas_por_escola(row['id'])
             st.dataframe(df_salas)
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3 = st.columns([1, 1, 2])
             with col1:
-                if st.button(f"✏️ Editar ID {row['id']}"):
+                if st.button(f"✏️ Editar", use_container_width=True):
                     st.session_state['modo_edicao'] = True
                     st.session_state['escola_em_edicao'] = row['id']
                     st.session_state['pagina_atual'] = "Cadastrar Escola"
                     st.rerun()
             with col2:
-                if st.button(f"🗑️ Excluir ID {row['id']}"):
+                if st.button(f"🗑️ Excluir", use_container_width=True):
                     conn = conectar()
                     cur = conn.cursor()
                     cur.execute("DELETE FROM salas WHERE escola_id = ?", (row['id'],))
@@ -127,7 +128,7 @@ def visualizar():
                     conn.close()
                     st.rerun()
             with col3:
-                if st.button(f"📁 Exportar CSV {row['id']}", key=f"botao_exportar_{row['id']}"):
+                if st.button(f"📁 Exportar CSV", key=f"botao_exportar_{row['id']}", use_container_width=True):
                     df_exportar = exportar_dados_por_escola(row['id'])
                     st.download_button(
                         "⬇️ Baixar CSV",
@@ -137,7 +138,8 @@ def visualizar():
                     )
 
 def form_escola():
-    st.markdown("# Cadastro de Escola")
+    st.title("🏫 Cadastro de Escola")
+    st.divider()
     editar_id = st.session_state.get("escola_em_edicao")
     nome = ""
     endereco = ""
@@ -196,7 +198,8 @@ def form_escola():
 
 def login():
     st.image("https://www.idecan.org.br/assets/img/logo.png", use_container_width=True)
-    st.markdown("# Login")
+    st.title("🔐 Acesso ao Sistema")
+    st.divider()
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
     if st.button("Entrar"):
