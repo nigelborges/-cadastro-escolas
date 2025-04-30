@@ -222,14 +222,12 @@ def form_escola():
 
 def mostrar_menu():
     st.sidebar.title("Menu")
-    opcao = st.sidebar.radio("Navegação", ["Cadastrar Escola", "Visualizar Escolas", "Sair"], index=0)
+    opcao = st.sidebar.radio("Navegação", ["Cadastrar Escola", "Visualizar Escolas"], index=0)
     if opcao == "Cadastrar Escola":
         form_escola()
     elif opcao == "Visualizar Escolas":
         visualizar()
-    elif opcao == "Sair":
-        st.session_state['logado'] = False
-        st.rerun()
+    
 
 if os.path.exists(SAVE_FILE):
     try:
@@ -254,9 +252,7 @@ if os.path.exists(SAVE_FILE):
 
 if __name__ == '__main__':
         # Inicializar session_state com segurança
-    if 'logado' not in st.session_state:
-        st.session_state['logado'] = False
-    if 'modo_edicao' not in st.session_state:
+        if 'modo_edicao' not in st.session_state:
         st.session_state['modo_edicao'] = False
     if 'escola_em_edicao' not in st.session_state:
         st.session_state['escola_em_edicao'] = None
