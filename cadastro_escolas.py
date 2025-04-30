@@ -90,8 +90,8 @@ def exportar_dados_geral():
 
 def visualizar():
     st.image("https://www.idecan.org.br/assets/img/logo.png", use_container_width=True)
-    st.title("📦 Exportação de Escolas")  # logo
-        with st.container():
+    st.title("📦 Exportação de Escolas")
+    if st.button("📦 Exportar Todas as Escolas", use_container_width=True):
         if st.button("📦 Exportar Todas as Escolas", use_container_width=True):
             df_geral = exportar_dados_geral()
             st.download_button(
@@ -204,17 +204,17 @@ def form_escola():
             } for i in range(int(num_salas))])
         st.markdown("### Cadastro das Salas")
         # aplicar ID Sala conforme nome
-            id_sala_counter = 1
-            sala_ids = {}
-            id_salas = []
-            for _, sala in df_salas.iterrows():
-                nome = sala['nome_sala']
-                if nome not in sala_ids:
-                    sala_ids[nome] = id_sala_counter
-                    id_sala_counter += 1
-                id_salas.append(sala_ids[nome])
-            df_salas.insert(0, 'ID Sala', id_salas)
-            df_editada = st.data_editor(df_salas, num_rows="dynamic", key="editor_salas")
+        id_sala_counter = 1
+        sala_ids = {}
+        id_salas = []
+        for _, sala in df_salas.iterrows():
+            nome = sala['nome_sala']
+            if nome not in sala_ids:
+                sala_ids[nome] = id_sala_counter
+                id_sala_counter += 1
+            id_salas.append(sala_ids[nome])
+        df_salas.insert(0, 'ID Sala', id_salas)
+        df_editada = st.data_editor(df_salas, num_rows="dynamic", key="editor_salas")(df_salas, num_rows="dynamic", key="editor_salas")
         salas = df_editada.to_dict("records")
 
     if st.button("Salvar Alterações" if editar_id else "Salvar Cadastro"):
