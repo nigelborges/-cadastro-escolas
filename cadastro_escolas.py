@@ -218,8 +218,7 @@ def mostrar_menu():
         st.rerun()
 
 if __name__ == '__main__':
-    st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
-    # Inicializar session_state com segurança
+        # Inicializar session_state com segurança
     if 'logado' not in st.session_state:
         st.session_state['logado'] = False
     if 'modo_edicao' not in st.session_state:
