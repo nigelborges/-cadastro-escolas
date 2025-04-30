@@ -1,65 +1,37 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
 
-DB_FILE = 'escolas.db'
 USUARIO_VALIDO = 'admin'
 SENHA_VALIDA = '1234'
 
 
 
-def conectar():
-    conn = sqlite3.connect(DB_FILE)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS escolas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            endereco TEXT NOT NULL
-        )""")
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS salas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            escola_id INTEGER,
-            nome_sala TEXT,
-            bloco TEXT,
-            andar TEXT,
-            ordem_sala INTEGER,
-            candidatos_sala INTEGER,
-            ordem_candidato INTEGER,
-            FOREIGN KEY (escola_id) REFERENCES escolas(id)
-        )""")
-    return conn
+
+import os
+
+SAVE_FILE = 'escolas_salvas.csv'
 
 def salvar_escola_banco(nome, endereco, salas, editar_id=None):
-    conn = conectar()
-    cur = conn.cursor()
-    if editar_id:
-        cur.execute("DELETE FROM salas WHERE escola_id = ?", (editar_id,))
-        cur.execute("UPDATE escolas SET nome = ?, endereco = ? WHERE id = ?", (nome, endereco, editar_id))
-        escola_id = editar_id
+    if 'escolas' not in st.session_state:
+        st.session_state['escolas'] = []
+    if editar_id is not None:
+        st.session_state['escolas'][editar_id] = {'nome': nome, 'endereco': endereco, 'salas': salas}
     else:
-        cur.execute("INSERT INTO escolas (nome, endereco) VALUES (?, ?)", (nome, endereco))
-        escola_id = cur.lastrowid
-    for i, sala in enumerate(salas):
-        cur.execute("""
-            INSERT INTO salas (
-                escola_id, nome_sala, bloco, andar, ordem_sala, candidatos_sala, ordem_candidato
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (escola_id, sala['nome_sala'], sala['bloco'], sala['andar'], i + 1, sala['candidatos_sala'], 1))
-    conn.commit()
-    conn.close()
+        st.session_state['escolas'].append({'nome': nome, 'endereco': endereco, 'salas': salas})
+
+def salvar_backup_csv():
+    df = exportar_dados_geral()
+    df.to_csv(SAVE_FILE, index=False)
 
 def carregar_escolas():
-    conn = conectar()
-    df = pd.read_sql_query("SELECT * FROM escolas", conn)
-    conn.close()
-    return df
+    if 'escolas' not in st.session_state:
+        return pd.DataFrame(columns=['id', 'nome', 'endereco'])
+    return pd.DataFrame([{'id': idx, 'nome': esc['nome'], 'endereco': esc['endereco']} for idx, esc in enumerate(st.session_state['escolas'])])
 
 def carregar_salas_por_escola(escola_id):
-    conn = conectar()
-    df = pd.read_sql_query("SELECT * FROM salas WHERE escola_id = ?", conn, params=(escola_id,))
-    conn.close()
-    return df
+    if 'escolas' not in st.session_state or escola_id >= len(st.session_state['escolas']):
+        return pd.DataFrame(columns=['nome_sala', 'bloco', 'andar', 'candidatos_sala'])
+    return pd.DataFrame(st.session_state['escolas'][escola_id]['salas'])
 
 def exportar_dados_geral():
     df_escolas = carregar_escolas()
@@ -120,12 +92,7 @@ def visualizar():
                     st.rerun()
             with col2:
                 if st.button(f"🗑️ Excluir", use_container_width=True):
-                    conn = conectar()
-                    cur = conn.cursor()
-                    cur.execute("DELETE FROM salas WHERE escola_id = ?", (row['id'],))
-                    cur.execute("DELETE FROM escolas WHERE id = ?", (row['id'],))
-                    conn.commit()
-                    conn.close()
+                    st.session_state['escolas'].pop(row['id'])
                     st.rerun()
             with col3:
                 if st.button(f"📁 Exportar CSV", key=f"botao_exportar_{row['id']}", use_container_width=True):
@@ -194,6 +161,7 @@ def form_escola():
             salvar_escola_banco(nome, endereco, salas, editar_id=editar_id)
             st.success("Escola atualizada com sucesso!" if editar_id else "Escola cadastrada com sucesso!")
             st.session_state['modo_edicao'] = False
+            salvar_backup_csv()
             st.session_state['escola_em_edicao'] = None
 
 def login():
@@ -219,6 +187,27 @@ def mostrar_menu():
     elif opcao == "Sair":
         st.session_state['logado'] = False
         st.rerun()
+
+if os.path.exists(SAVE_FILE):
+    try:
+        df_loaded = pd.read_csv(SAVE_FILE)
+        escolas_dict = {}
+        for _, row in df_loaded.iterrows():
+            key = (row['ID Escola'], row['Nome Escola'], row['Endereco'])
+            if key not in escolas_dict:
+                escolas_dict[key] = []
+            escolas_dict[key].append({
+                'nome_sala': row['Nome da Sala'],
+                'bloco': row['Bloco'],
+                'andar': row['Andar'],
+                'candidatos_sala': row['Ordem do Candidato']
+            })
+        st.session_state['escolas'] = [
+            {'nome': k[1], 'endereco': k[2], 'salas': v}
+            for k, v in escolas_dict.items()
+        ]
+    except Exception as e:
+        st.warning(f"Erro ao carregar backup: {e}")
 
 if __name__ == '__main__':
         # Inicializar session_state com segurança
