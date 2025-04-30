@@ -135,7 +135,7 @@ def visualizar():
                     st.session_state['modo_edicao'] = True
                     st.session_state['escola_em_edicao'] = idx
                     st.session_state['pagina_atual'] = "Cadastrar Escola"
-                    st.experimental_rerun()
+                    st.rerun()
             with col2:
                 if st.button(f"🗑️ Excluir", key=f"excluir_{idx}", use_container_width=True):
                     st.session_state['escolas'].pop(idx)
