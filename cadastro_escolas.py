@@ -257,10 +257,7 @@ if os.path.exists(SAVE_FILE):
             for k, v in escolas_dict.items()
         ]
     except Exception as e:
-    if st.session_state.get('escolas'):
-        st.warning(f"Erro ao carregar backup: {e}")
-    else:
-        st.info("Nenhum dado salvo foi encontrado.")
+    pass  # Silencia erros de leitura do CSV sem interferir na execução
 
 if __name__ == '__main__':
     # Inicializar session_state com segurança
