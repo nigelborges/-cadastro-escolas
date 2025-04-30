@@ -68,35 +68,45 @@ def carregar_salas_por_escola(escola_id):
     conn.close()
     return df
 
-def exportar_dados_por_escola(escola_id):
+def exportar_dados_geral():
     df_escolas = carregar_escolas()
-    escola = df_escolas[df_escolas['id'] == escola_id].iloc[0]
-    df_salas = carregar_salas_por_escola(escola_id)
-    candidatos = []
-    id_sala_counter = 1
-    sala_ids = {}
-    for _, sala in df_salas.iterrows():
-        nome = sala['nome_sala']
-        if nome not in sala_ids:
-            sala_ids[nome] = id_sala_counter
-            id_sala_counter += 1
-        id_sala = sala_ids[nome]
-        for ordem in range(1, sala['candidatos_sala'] + 1):
-            candidatos.append({
-                'ID Escola': escola['id'],
-                'Nome Escola': escola['nome'],
-                'Endereco': escola['endereco'],
-                'ID Sala': id_sala,
-                'Nome da Sala': sala['nome_sala'],
-                'Bloco': sala['bloco'],
-                'Andar': sala['andar'],
-                'Ordem da Sala': sala['ordem_sala'],
-                'Numero de Salas': len(df_salas),
-                'Ordem do Candidato': ordem
-            })
-    return pd.DataFrame(candidatos)
+    todos = []
+    for _, escola in df_escolas.iterrows():
+        df_salas = carregar_salas_por_escola(escola['id'])
+        id_sala_counter = 1
+        sala_ids = {}
+        for _, sala in df_salas.iterrows():
+            nome = sala['nome_sala']
+            if nome not in sala_ids:
+                sala_ids[nome] = id_sala_counter
+                id_sala_counter += 1
+            id_sala = sala_ids[nome]
+            for ordem in range(1, sala['candidatos_sala'] + 1):
+                todos.append({
+                    'ID Escola': escola['id'],
+                    'Nome Escola': escola['nome'],
+                    'Endereco': escola['endereco'],
+                    'ID Sala': id_sala,
+                    'Nome da Sala': sala['nome_sala'],
+                    'Bloco': sala['bloco'],
+                    'Andar': sala['andar'],
+                    'Ordem da Sala': sala['ordem_sala'],
+                    'Numero de Salas': len(df_salas),
+                    'Ordem do Candidato': ordem
+                })
+    return pd.DataFrame(todos)
 
 def visualizar():
+    st.image("https://www.idecan.org.br/assets/img/logo.png", use_container_width=True)  # logo
+    if st.button("📦 Exportar Todas as Escolas", use_container_width=True):
+        df_geral = exportar_dados_geral()
+        st.download_button(
+            "⬇️ Baixar CSV Geral",
+            df_geral.to_csv(index=False).encode('utf-8'),
+            file_name="todas_escolas.csv",
+            use_container_width=True
+        )
+
     st.markdown("# Escolas Cadastradas")
     df = carregar_escolas()
     if df.empty:
@@ -113,7 +123,7 @@ def visualizar():
                     st.session_state['modo_edicao'] = True
                     st.session_state['escola_em_edicao'] = row['id']
                     st.session_state['pagina_atual'] = "Cadastrar Escola"
-                    st.experimental_rerun()
+                    st.rerun()
             with col2:
                 if st.button(f"🗑️ Excluir ID {row['id']}"):
                     conn = conectar()
@@ -122,7 +132,7 @@ def visualizar():
                     cur.execute("DELETE FROM escolas WHERE id = ?", (row['id'],))
                     conn.commit()
                     conn.close()
-                    st.experimental_rerun()
+                    st.rerun()
             with col3:
                 if st.button(f"📁 Exportar CSV {row['id']}", key=f"botao_exportar_{row['id']}"):
                     df_exportar = exportar_dados_por_escola(row['id'])
