@@ -125,7 +125,8 @@ def visualizar():
                     id_sala_counter += 1
                 id_salas.append(sala_ids[nome])
             df_salas_visual.insert(0, "ID Sala", id_salas)
-            df_salas_visual.insert(0, "Nome Escola", escola['nome'])
+            df_salas_visual.insert(0, "ID Escola", idx + 1)
+            df_salas_visual.insert(1, "Nome Escola", escola['nome'])
             df_salas_visual.insert(1, "Endereco", escola['endereco'])
             st.dataframe(df_salas_visual)
             col1, col2, col3 = st.columns([1, 1, 2])
