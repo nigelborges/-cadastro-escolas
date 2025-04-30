@@ -259,6 +259,8 @@ if os.path.exists(SAVE_FILE):
     except Exception as e:
     if st.session_state.get('escolas'):
         st.warning(f"Erro ao carregar backup: {e}")
+    else:
+        pass
 
 if __name__ == '__main__':
     # Inicializar session_state com segurança
