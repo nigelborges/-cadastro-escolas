@@ -6,14 +6,7 @@ DB_FILE = 'escolas.db'
 USUARIO_VALIDO = 'admin'
 SENHA_VALIDA = '1234'
 
-if 'logado' not in st.session_state:
-    st.session_state['logado'] = False
-if 'modo_edicao' not in st.session_state:
-    st.session_state['modo_edicao'] = False
-if 'escola_em_edicao' not in st.session_state:
-    st.session_state['escola_em_edicao'] = None
-if 'pagina_atual' not in st.session_state:
-    st.session_state['pagina_atual'] = 'Cadastrar Escola'
+
 
 def conectar():
     conn = sqlite3.connect(DB_FILE)
@@ -202,13 +195,14 @@ def form_escola():
             st.session_state['escola_em_edicao'] = None
 
 def login():
+    st.image("https://www.idecan.org.br/assets/img/logo.png", use_container_width=True)
     st.markdown("# Login")
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
     if st.button("Entrar"):
         if usuario == USUARIO_VALIDO and senha == SENHA_VALIDA:
             st.session_state['logado'] = True
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Usuário ou senha incorretos")
 
@@ -221,9 +215,19 @@ def mostrar_menu():
         visualizar()
     elif opcao == "Sair":
         st.session_state['logado'] = False
-        st.experimental_rerun()
+        st.rerun()
 
 if __name__ == '__main__':
+    st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
+    # Inicializar session_state com segurança
+    if 'logado' not in st.session_state:
+        st.session_state['logado'] = False
+    if 'modo_edicao' not in st.session_state:
+        st.session_state['modo_edicao'] = False
+    if 'escola_em_edicao' not in st.session_state:
+        st.session_state['escola_em_edicao'] = None
+    if 'pagina_atual' not in st.session_state:
+        st.session_state['pagina_atual'] = 'Cadastrar Escola'
     st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
     if not st.session_state['logado']:
         login()
