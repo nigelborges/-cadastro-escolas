@@ -231,9 +231,10 @@ def visualizar():
                     salvar_backup_csv()
                     st.experimental_rerun()
             with col3:
-                if st.button(f"📁 Exportar CSV", key=f"botao_exportar_{idx}", use_container_width=True):
-                    df_exportar = exportar_dados_por_escola(idx)
-                    st.download_button(
+                if st.session_state['usuario']['nivel'] == 'admin':
+                    if st.button(f"📁 Exportar CSV", key=f"botao_exportar_{idx}", use_container_width=True):
+                        df_exportar = exportar_dados_por_escola(idx)
+                        st.download_button(
                         "⬇️ Baixar CSV",
                         df_exportar.to_csv(index=False).encode('utf-8'),
                         file_name=f"escola_{idx}.csv",
