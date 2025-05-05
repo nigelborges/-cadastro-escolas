@@ -4,14 +4,22 @@ import sqlite3
 
 st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
 
-# Login
+# Acesso direto como usuário comum
 if 'usuario' not in st.session_state:
-    st.session_state['usuario'] = {'id': 0, 'nome': 'admin', 'nivel': 'admin'}
-    st.session_state['usuario'] = {'id': usuario[0], 'nome': usuario[1], 'nivel': usuario[2]}
-    st.rerun()
-        else:
-            st.error("Credenciais inválidas.")
-    st.stop()
+    st.session_state['usuario'] = {'id': -1, 'nome': 'visitante', 'nivel': 'cadastrador'}
+
+# Botão para login como admin
+with st.sidebar:
+    if st.button("🔐 Logar como Administrador"):
+        with st.form("login_admin"):
+            usuario_input = st.text_input("Usuário")
+            senha_input = st.text_input("Senha", type="password")
+            if st.form_submit_button("Entrar"):
+                if usuario_input == 'admin' and senha_input == '1234':
+                    st.session_state['usuario'] = {'id': 0, 'nome': 'admin', 'nivel': 'admin'}
+                    st.rerun()
+                else:
+                    st.error("Credenciais inválidas.")
 
 USUARIO_VALIDO = 'admin'
 SENHA_VALIDA = '1234'
