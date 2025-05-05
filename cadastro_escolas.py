@@ -6,19 +6,7 @@ st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
 
 # Login
 if 'usuario' not in st.session_state:
-    st.session_state['usuario'] = {'id': -1, 'nome': 'visitante', 'nivel': 'cadastrador'}
-
-if st.session_state['usuario']['nome'] == 'visitante':
-    st.title("🔐 Login do Administrador")
-    usuario_input = st.text_input("Usuário")
-    senha_input = st.text_input("Senha", type="password")
-    if st.button("Entrar"):
-        if usuario_input == 'admin' and senha_input == '1234':
-            st.session_state['usuario'] = {'id': 0, 'nome': 'admin', 'nivel': 'admin'}
-            st.rerun()
-        else:
-            st.error("Credenciais inválidas.")
-    st.stop()
+    st.session_state['usuario'] = {'id': 0, 'nome': 'admin', 'nivel': 'admin'}
     st.session_state['usuario'] = {'id': usuario[0], 'nome': usuario[1], 'nivel': usuario[2]}
     st.rerun()
         else:
