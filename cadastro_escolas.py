@@ -8,7 +8,7 @@ st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
 if 'usuario' not in st.session_state:
     st.session_state['usuario'] = {'id': -1, 'nome': 'visitante', 'nivel': 'cadastrador'}
 
-if st.session_state['usuario']['nivel'] == 'admin':
+if st.session_state['usuario']['nome'] == 'visitante':
     st.title("🔐 Login do Administrador")
     usuario_input = st.text_input("Usuário")
     senha_input = st.text_input("Senha", type="password")
@@ -170,7 +170,7 @@ else:
 def visualizar():
     st.image("https://www.idecan.org.br/assets/img/logo.png", use_container_width=True)
     st.title("📦 Exportação de Escolas")
-    if st.button("📦 Exportar Todas as Escolas", use_container_width=True):
+    if st.session_state['usuario']['nivel'] == 'admin' and st.button("📦 Exportar Todas as Escolas", use_container_width=True):
         df_geral = exportar_dados_geral()
         st.download_button(
             "⬇️ Baixar CSV Geral",
