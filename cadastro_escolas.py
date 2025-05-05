@@ -1,5 +1,29 @@
 import streamlit as st
 import pandas as pd
+import sqlite3
+
+st.set_page_config(page_title="Sistema Escolar - Acesso", layout="centered")
+
+# Login
+if 'usuario' not in st.session_state:
+    st.session_state['usuario'] = {'id': -1, 'nome': 'visitante', 'nivel': 'cadastrador'}
+
+if st.session_state['usuario']['nivel'] == 'admin':
+    st.title("🔐 Login do Administrador")
+    usuario_input = st.text_input("Usuário")
+    senha_input = st.text_input("Senha", type="password")
+    if st.button("Entrar"):
+        if usuario_input == 'admin' and senha_input == '1234':
+            st.session_state['usuario'] = {'id': 0, 'nome': 'admin', 'nivel': 'admin'}
+            st.rerun()
+        else:
+            st.error("Credenciais inválidas.")
+    st.stop()
+    st.session_state['usuario'] = {'id': usuario[0], 'nome': usuario[1], 'nivel': usuario[2]}
+    st.rerun()
+        else:
+            st.error("Credenciais inválidas.")
+    st.stop()
 
 USUARIO_VALIDO = 'admin'
 SENHA_VALIDA = '1234'
@@ -9,15 +33,57 @@ SENHA_VALIDA = '1234'
 
 import os
 
+DB_FILE = 'escolas.db'
+
+# Criar o banco e tabelas, se não existirem
+import sqlite3
+conn = sqlite3.connect(DB_FILE)
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS escolas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        endereco TEXT NOT NULL,
+        usuario_id INTEGER,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    )
+""")
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS salas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        escola_id INTEGER,
+        nome_sala TEXT,
+        bloco TEXT,
+        andar TEXT,
+        candidatos_sala INTEGER,
+        FOREIGN KEY (escola_id) REFERENCES escolas(id)
+    )
+""")
+conn.commit()
+conn.close()
+
 SAVE_FILE = 'escolas_salvas.csv'
 
 def salvar_escola_banco(nome, endereco, salas, editar_id=None):
-    if 'escolas' not in st.session_state:
-        st.session_state['escolas'] = []
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    usuario_id = st.session_state['usuario']['id']
+
     if editar_id is not None:
-        st.session_state['escolas'][editar_id] = {'nome': nome, 'endereco': endereco, 'salas': salas}
+        cursor.execute("UPDATE escolas SET nome = ?, endereco = ? WHERE id = ?", (nome, endereco, editar_id))
+        cursor.execute("DELETE FROM salas WHERE escola_id = ?", (editar_id,))
+        escola_id = editar_id
     else:
-        st.session_state['escolas'].append({'nome': nome, 'endereco': endereco, 'salas': salas})
+        cursor.execute("INSERT INTO escolas (nome, endereco, usuario_id) VALUES (?, ?, ?)", (nome, endereco, usuario_id))
+        escola_id = cursor.lastrowid
+
+    for sala in salas:
+        cursor.execute("""
+            INSERT INTO salas (escola_id, nome_sala, bloco, andar, candidatos_sala)
+            VALUES (?, ?, ?, ?, ?)
+        """, (escola_id, sala['nome_sala'], sala['bloco'], sala['andar'], sala['candidatos_sala']))
+
+    conn.commit()
+    conn.close()
 
 def salvar_backup_csv():
     df = exportar_dados_geral()
@@ -25,13 +91,18 @@ def salvar_backup_csv():
     st.toast("Backup salvo!")
 
 def carregar_escolas():
-    if 'escolas' not in st.session_state:
-        return pd.DataFrame(columns=['id', 'nome', 'endereco'])
-    return pd.DataFrame([{'id': idx, 'id_visivel': idx + 1, 'nome': esc['nome'], 'endereco': esc['endereco']} for idx, esc in enumerate(st.session_state['escolas'])])
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
 
-def carregar_salas_por_escola(escola_id):
-    if 'escolas' not in st.session_state or escola_id >= len(st.session_state['escolas']):
-        return pd.DataFrame(columns=['nome_sala', 'bloco', 'andar', 'candidatos_sala'])
+    usuario = st.session_state['usuario']
+    if usuario['nivel'] == 'admin':
+        cursor.execute("SELECT id, nome, endereco, usuario_id FROM escolas")
+    else:
+        cursor.execute("SELECT id, nome, endereco, usuario_id FROM escolas WHERE usuario_id = ?", (usuario['id'],))
+
+    dados = cursor.fetchall()
+    conn.close()
+    return pd.DataFrame(dados, columns=['id', 'nome', 'endereco', 'usuario_id']))
     return pd.DataFrame(st.session_state['escolas'][escola_id]['salas'])
 
 def exportar_dados_por_escola(escola_id):
@@ -62,7 +133,14 @@ def exportar_dados_por_escola(escola_id):
     return pd.DataFrame(candidatos)
 
 def exportar_dados_geral():
+    usuario_id = st.session_state['usuario']['id']
+    nivel = st.session_state['usuario']['nivel']
+
+    if nivel == 'admin':
     df_escolas = carregar_escolas()
+else:
+    df_escolas = carregar_escolas()
+    df_escolas = df_escolas[df_escolas['usuario_id'] == usuario_id]
     todos = []
     for _, escola in df_escolas.iterrows():
         df_salas = carregar_salas_por_escola(escola['id'])
@@ -94,7 +172,6 @@ def visualizar():
     st.title("📦 Exportação de Escolas")
     if st.button("📦 Exportar Todas as Escolas", use_container_width=True):
         df_geral = exportar_dados_geral()
-        
         st.download_button(
             "⬇️ Baixar CSV Geral",
             df_geral.to_csv(index=False).encode('utf-8'),
@@ -104,10 +181,13 @@ def visualizar():
 
     st.title("📋 Escolas Cadastradas")
     st.divider()
-    if 'escolas' not in st.session_state or not st.session_state['escolas']:
+
+    df_escolas = carregar_escolas()
+    if df_escolas.empty:
         st.info("Nenhuma escola cadastrada.")
         return
-    for idx, escola in enumerate(st.session_state['escolas']):
+
+    for idx, escola in df_escolas.iterrows():
         with st.expander(f"🏫 {escola['nome']} - {escola['endereco']}"):
             st.subheader(f"📄 Salas da escola {escola['nome']}")
             st.caption(f"Endereço: {escola['endereco']}")
